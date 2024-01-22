@@ -10,10 +10,14 @@ const {
   assert: { fail }
 } = require('chai');
 const path = require('path');
-const request = require('request-promise');
+const fetch = require('node-fetch');
 
 const retry = require('@instana/core/test/test_util/retry');
 const config = require('../config');
+
+// To address the certificate authorization issue with node-fetch, process.env.NODE_TLS_REJECT_UNAUTHORIZED
+// was set to '0'. Refer to the problem discussed in https://github.com/node-fetch/node-fetch/issues/19
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 function AbstractServerlessControl(opts = {}) {
   this.opts = opts;
@@ -314,12 +318,7 @@ AbstractServerlessControl.prototype.getMetrics = function getMetrics() {
 
 AbstractServerlessControl.prototype._getFromBackend = function _getFromBackend(url) {
   if (this.backendHasBeenStarted) {
-    return request({
-      method: 'GET',
-      url: `${this.backendBaseUrl}${url}`,
-      json: true,
-      strictSSL: false
-    });
+    return fetch(`${this.backendBaseUrl}${url}`, { method: 'GET', strictSSL: false }).then(response => response.json());
   } else {
     return Promise.resolve([]);
   }
@@ -327,17 +326,9 @@ AbstractServerlessControl.prototype._getFromBackend = function _getFromBackend(u
 
 AbstractServerlessControl.prototype.resetBackend = function resetBackend() {
   if (this.backendHasBeenStarted) {
-    // eslint-disable-next-line no-console
-    console.log('[AbstractServerlessControl] resetting backend');
-
-    return request({
-      method: 'DELETE',
-      url: `${this.backendBaseUrl}/received`,
-      strictSSL: false
-    }).then(() => {
-      // eslint-disable-next-line no-console
-      console.log('[AbstractServerlessControl] reseted backend');
-    });
+    return fetch(`${this.backendBaseUrl}/received`, { method: 'DELETE', strictSSL: false }).then(response =>
+      response.json()
+    );
   } else {
     return Promise.resolve([]);
   }
@@ -348,11 +339,10 @@ AbstractServerlessControl.prototype.setResponsive = function setResponsive(respo
     responsive = true;
   }
   if (this.backendHasBeenStarted) {
-    return request({
+    return fetch(`${this.backendBaseUrl}/responsive?responsive=${responsive}`, {
       method: 'POST',
-      url: `${this.backendBaseUrl}/responsive?responsive=${responsive}`,
       strictSSL: false
-    });
+    }).then(response => response.json());
   } else {
     return Promise.resolve([]);
   }
@@ -360,11 +350,7 @@ AbstractServerlessControl.prototype.setResponsive = function setResponsive(respo
 
 AbstractServerlessControl.prototype._getFromExtension = function _getFromExtension(url) {
   if (this.extensionHasBeenStarted) {
-    return request({
-      method: 'GET',
-      url: `${this.extensionBaseUrl}${url}`,
-      json: true
-    });
+    return fetch(`${this.extensionBaseUrl}${url}`, { method: 'GET' }).then(response => response.json());
   } else {
     return Promise.resolve([]);
   }
@@ -372,10 +358,7 @@ AbstractServerlessControl.prototype._getFromExtension = function _getFromExtensi
 
 AbstractServerlessControl.prototype.resetExtension = function resetExtension() {
   if (this.extensionHasBeenStarted) {
-    return request({
-      method: 'DELETE',
-      url: `${this.extensionBaseUrl}/received`
-    });
+    return fetch(`${this.extensionBaseUrl}/received`, { method: 'DELETE' }).then(response => response.json());
   } else {
     return Promise.resolve([]);
   }

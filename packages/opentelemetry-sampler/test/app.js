@@ -5,6 +5,7 @@
 'use strict';
 
 const nock = require('nock');
+
 const otelEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 let otelSpans = [];
 
@@ -22,7 +23,7 @@ if (otelEndpoint) {
 require('./tracing');
 
 const express = require('express');
-const request = require('request-promise');
+const got = require('got');
 const logPrefix = `OpenTelemetry test app (${process.pid}):\t`;
 const log = require('@instana/core/test/test_util/log').getLogger(logPrefix);
 const { delay } = require('@instana/core/test/test_util');
@@ -35,12 +36,12 @@ const port = getAppPort();
  * OpenTelemetry instrumentation does not work properly with node-fetch:
  * https://github.com/open-telemetry/opentelemetry-js/issues/1315
  */
-
+// The "request-promise" is deprecated and has been replaced with "got".
 const app = express();
 
 app.get('/otel-test', (_req, res) => {
   delay(500)
-    .then(() => request('https://www.example.com'))
+    .then(() => got('https://www.example.com'))
     .then(() => {
       res.status(200).json({ success: true });
     })
@@ -70,7 +71,7 @@ app.get('/get-otel-spans', (_req, res) => {
 
 app.post('/otel-post', (_req, res) => {
   delay(500)
-    .then(() => request('https://www.example.com'))
+    .then(() => got('https://www.example.com'))
     .then(() => {
       res.status(200).json({ success: true });
     })

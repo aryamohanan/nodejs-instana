@@ -7,7 +7,7 @@
 
 require('./tracing');
 const express = require('express');
-const request = require('request-promise');
+const got = require('got');
 const logPrefix = `OpenTelemetry test app (${process.pid}):\t`;
 const log = require('@instana/core/test/test_util/log').getLogger(logPrefix);
 const { delay } = require('@instana/core/test/test_util');
@@ -21,11 +21,12 @@ const port = getAppPort();
  * https://github.com/open-telemetry/opentelemetry-js/issues/1315
  */
 
+// The "request-promise" is deprecated and has been replaced with "got".
 const app = express();
 
 app.get('/otel-test', (_req, res) => {
   delay(500)
-    .then(() => request('https://www.example.com'))
+    .then(() => got('https://www.example.com'))
     .then(text => {
       res.send({ ok: true, data: `${text.substr(0, 10)}...` });
     })
@@ -36,7 +37,7 @@ app.get('/otel-test', (_req, res) => {
 
 app.post('/otel-post', (_req, res) => {
   delay(500)
-    .then(() => request('https://www.example.com'))
+    .then(() => got('https://www.example.com'))
     .then(text => {
       res.send({ ok: true, data: `${text.substr(0, 10)}...` });
     })

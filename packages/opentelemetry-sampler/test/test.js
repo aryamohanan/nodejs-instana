@@ -55,20 +55,21 @@ mochaSuiteFn('Instana OpenTelemetry Sampler', function () {
           'X-INSTANA-S': 'e457b5a2e4d86bd1'
         }
       });
-
+      // for got there is an additional span for network event dns.lookup
       await retry(async () => {
         const spans = await appControls.getSpans();
         const spanNames = [
           'middleware - query',
           'middleware - expressInit',
           'request handler - /otel-test',
+          'dns.lookup',
           'tcp.connect',
           'tls.connect',
           'GET',
           'GET /otel-test'
         ];
         expect(spanNames).to.eql(spans.map(s => s.data.operation));
-        expect(spans.length).to.eql(7);
+        expect(spans.length).to.gte(7);
       });
     });
   });
@@ -115,6 +116,7 @@ mochaSuiteFn('Instana OpenTelemetry Sampler', function () {
         'middleware - query',
         'middleware - expressInit',
         'request handler - /otel-test',
+        'dns.lookup',
         'tcp.connect',
         'tls.connect',
         'GET',

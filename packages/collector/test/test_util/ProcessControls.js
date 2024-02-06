@@ -12,8 +12,6 @@ const fork = require('child_process').fork;
 const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch');
-// eslint-disable-next-line no-unused-vars
-const request = require('request-promise');
 
 const config = require('../../../core/test/config');
 const http2Promise = require('./http2Promise');
@@ -244,40 +242,20 @@ class ProcessControls {
         opts.headers['X-INSTANA-L'] = '0';
       }
 
-      // opts.url = baseUrl + (opts.path || '');
+      opts.url = baseUrl + (opts.path || '');
       opts.json = true;
       opts.ca = cert;
-      // return request(opts);
       let response;
       try {
-        // eslint-disable-next-line no-new
-        //  testUtils.delay(5).then(async () => {
-        //  await new Promise(resolve => setTimeout(resolve, 100));
-        // return testUtils.retry(async () => {
-        const result = await fetch(
-          baseUrl + (opts.path || ''),
-          opts
-          // {
-          //   method: opts.method,
-          //   headers: opts.headers,
-          //   body: opts.body,
-          //   path: opts.path,
-          //   ca: opts.ca,
-          //   qs: opts.qs,
-          //   simple: opts.simple,
-          //   json: opts.json
-          // }
-        );
-        response = await result;
-        if (this.responseIntext) {
-          return response.text();
+        const result = await fetch(opts.url, opts);
+        const contentType = result.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          response = await result.json();
+        } else {
+          response = await result.text();
         }
-        return response.json();
-
-        //  });
+        return response;
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.log('We caught an error, are you intrested?', error);
         return response;
       }
     }

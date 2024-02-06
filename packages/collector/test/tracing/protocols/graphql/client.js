@@ -11,7 +11,7 @@ const amqp = require('amqplib');
 const bodyParser = require('body-parser');
 const express = require('express');
 const morgan = require('morgan');
-const rp = require('request-promise');
+const fetch = require('node-fetch');
 const { v4: uuid } = require('uuid');
 const ws = require('ws');
 
@@ -94,9 +94,8 @@ app.post('/mutation', (req, res) =>
 app.post('/subscription', (req, res) => establishSubscription(req, res));
 
 app.post('/publish-update-via-http', (req, res) =>
-  rp({
+  fetch(`${serverBaseUrl}/publish-update`, {
     method: 'POST',
-    url: `${serverBaseUrl}/publish-update`,
     body: JSON.stringify({
       id: req.body.id || 1,
       name: req.body.name || 'Updated Name',
@@ -107,7 +106,7 @@ app.post('/publish-update-via-http', (req, res) =>
     }
   })
     .then(response => {
-      res.send(response);
+      res.send(response.json());
     })
     .catch(e => {
       log(e);
@@ -153,9 +152,8 @@ function runQuery(req, res, resolverType) {
 }
 
 function runQueryViaHttp(query, res) {
-  return rp({
+  return fetch(serverGraphQLEndpoint, {
     method: 'POST',
-    url: serverGraphQLEndpoint,
     body: JSON.stringify({
       query
     }),
@@ -164,7 +162,7 @@ function runQueryViaHttp(query, res) {
     }
   })
     .then(response => {
-      res.send(response);
+      res.send(response.json());
     })
     .catch(e => {
       log(e);
@@ -218,9 +216,8 @@ function runMutation(req, res, input) {
     }
   `;
 
-  return rp({
+  return fetch(serverGraphQLEndpoint, {
     method: 'POST',
-    url: serverGraphQLEndpoint,
     body: JSON.stringify({
       query: mutation,
       variables: input
@@ -230,7 +227,7 @@ function runMutation(req, res, input) {
     }
   })
     .then(response => {
-      res.send(response);
+      res.send(response.json());
     })
     .catch(e => {
       log(e);

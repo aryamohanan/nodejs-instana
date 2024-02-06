@@ -6,7 +6,7 @@
 'use strict';
 
 const spawn = require('child_process').spawn;
-const request = require('request-promise');
+const fetch = require('node-fetch');
 const path = require('path');
 const portfinder = require('../../../test_util/portfinder');
 
@@ -43,22 +43,20 @@ exports.registerTestHooks = opts => {
 
 function waitUntilServerIsUp() {
   return testUtils.retry(() =>
-    request({
+    fetch(`http://127.0.0.1:${appPort}`, {
       method: 'GET',
-      url: `http://127.0.0.1:${appPort}`,
       headers: {
         'X-INSTANA-L': '0'
       }
-    })
+    }).then(response => response.json())
   );
 }
 
 exports.getPid = () => app.pid;
 
 exports.sendToQueue = (message, headers) =>
-  request({
+  fetch(`http://127.0.0.1:${appPort}/send-to-queue`, {
     method: 'POST',
-    url: `http://127.0.0.1:${appPort}/send-to-queue`,
     json: true,
     simple: true,
     headers,
@@ -68,9 +66,8 @@ exports.sendToQueue = (message, headers) =>
   });
 
 exports.publish = (message, headers) =>
-  request({
+  fetch(`http://127.0.0.1:${appPort}/publish`, {
     method: 'POST',
-    url: `http://127.0.0.1:${appPort}/publish`,
     json: true,
     simple: true,
     headers,
@@ -80,9 +77,8 @@ exports.publish = (message, headers) =>
   });
 
 exports.sendToGetQueue = (message, headers) =>
-  request({
+  fetch(`http://127.0.0.1:${appPort}/send-to-get-queue`, {
     method: 'POST',
-    url: `http://127.0.0.1:${appPort}/send-to-get-queue`,
     json: true,
     simple: true,
     headers,
@@ -92,9 +88,8 @@ exports.sendToGetQueue = (message, headers) =>
   });
 
 exports.publishToConfirmChannelWithoutCallback = (message, headers) =>
-  request({
+  fetch(`http://127.0.0.1:${appPort}/publish-to-confirm-channel-without-callback`, {
     method: 'POST',
-    url: `http://127.0.0.1:${appPort}/publish-to-confirm-channel-without-callback`,
     json: true,
     simple: true,
     headers,
@@ -104,9 +99,8 @@ exports.publishToConfirmChannelWithoutCallback = (message, headers) =>
   });
 
 exports.sendToConfirmQueue = (message, headers) =>
-  request({
+  fetch(`http://127.0.0.1:${appPort}/send-to-confirm-queue`, {
     method: 'POST',
-    url: `http://127.0.0.1:${appPort}/send-to-confirm-queue`,
     json: true,
     simple: true,
     headers,

@@ -5,11 +5,9 @@
 
 'use strict';
 
-const errors = require('request-promise/errors');
+const fetch = require('node-fetch');
 const path = require('path');
-const request = require('request-promise');
 const spawn = require('child_process').spawn;
-
 const portfinder = require('../../../../test_util/portfinder');
 const testUtils = require('../../../../../../core/test/test_util');
 const config = require('../../../../../../core/test/config');
@@ -21,13 +19,11 @@ let expressProxyApp;
 
 function waitUntilServerIsUp() {
   return testUtils.retry(() =>
-    request({
-      method: 'GET',
-      url: `http://localhost:${appPort}`,
+    fetch(`http://localhost:${appPort}`, {
       headers: {
         'X-INSTANA-L': '0'
       }
-    })
+    }).then(response => response.json())
   );
 }
 
@@ -64,20 +60,18 @@ exports.sendRequest = opts => {
     headers['X-INSTANA-L'] = '0';
   }
 
-  return request({
-    method: opts.method,
-    url: `http://localhost:${appPort}${opts.path}`,
-    qs: {
-      responseStatus: opts.responseStatus,
-      delay: opts.delay,
-      url: opts.target,
-      httpLib: opts.httpLib
-    },
-    headers
-  }).catch(
-    errors.StatusCodeError,
-    (
-      reason // treat all status code errors as likely // allowed
-    ) => reason
-  );
+  try {
+    return fetch(`http://localhost:${appPort}${opts.path}`, {
+      method: opts.method,
+      headers,
+      qs: {
+        responseStatus: opts.responseStatus,
+        delay: opts.delay,
+        url: opts.target,
+        httpLib: opts.httpLib
+      }
+    }).then(response => response.json());
+  } catch (error) {
+    return error;
+  }
 };

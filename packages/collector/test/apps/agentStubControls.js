@@ -218,22 +218,32 @@ class AgentStubControls {
       body: {
         pid
       }
-    });
+    }).then(response => response.json());
   }
 
-  addEntityData(pid, data) {
-    return fetch(`http://127.0.0.1:${this.agentPort}/com.instana.plugin.nodejs.${pid}`, {
+  async addEntityData(pid, data) {
+    const response = await fetch(`http://127.0.0.1:${this.agentPort}/com.instana.plugin.nodejs.${pid}`, {
       method: 'POST',
       json: true,
       body: data
-    }).then(response => response.json());
+    });
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      return response.text();
+    }
   }
 
-  addRequestForPid(pid, r) {
-    return fetch(`http://127.0.0.1:${this.agentPort}/request/${pid}`, {
+  async addRequestForPid(pid, r) {
+    const response = await fetch(`http://127.0.0.1:${this.agentPort}/request/${pid}`, {
       method: 'POST',
-      body: r
-    }).then(response => response.json());
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(r)
+    });
+    return response.json();
   }
 
   async getLastMetricValue(pid, _path) {

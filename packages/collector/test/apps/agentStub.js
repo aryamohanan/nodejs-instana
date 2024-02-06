@@ -52,7 +52,7 @@ app.use(
 );
 
 app.get('/', (req, res) => {
-  res.json({ version: '1.1.999' });
+  res.send({ version: '1.1.999' });
 });
 
 app.put('/com.instana.plugin.nodejs.discovery', (req, res) => {
@@ -126,7 +126,6 @@ app.post(
 
       aggregateMetrics(req.params.pid, req.body);
     }
-
     const requestsForPid = requests[req.params.pid] || [];
     res.json(requestsForPid);
     delete requests[req.params.pid];
@@ -199,7 +198,7 @@ app.post('/tracermetrics', function handleTracermetrics(req, res) {
   if (!tracingMetrics) {
     res.sendStatus(404);
   } else {
-    res.send('OK');
+    res.send({ status: 'OK' });
   }
 });
 
@@ -207,20 +206,20 @@ app.post('/com.instana.plugin.generic.event', function postEvent(req, res) {
   if (!dropAllData) {
     receivedData.events.push(req.body);
   }
-  res.send('OK');
+  res.send({ status: 'OK' });
 });
 
 app.post('/com.instana.plugin.generic.agent-monitoring-event', function postMonitoringEvent(req, res) {
   if (!dropAllData) {
     receivedData.monitoringEvents.push(req.body);
   }
-  res.send('OK');
+  res.send({ status: 'OK' });
 });
 
 function checkExistenceOfKnownPid(fn) {
   return (req, res) => {
     const pid = req.params.pid;
-    if (!discoveries[pid] || discoveries[pid].length === 0) {
+    if (!requests[pid] || requests[pid].length === 0) {
       logger.debug('Rejecting access for PID %s, not a known discovery', pid);
       return res.status(400).send(`Unknown discovery with pid: ${pid}`);
     }
@@ -235,13 +234,11 @@ app.delete('/', (req, res) => {
   res.sendStatus(200);
 });
 
-app.get('/received/data', (req, res) => {
-  res.json(receivedData);
-});
+app.get('/received/data', (req, res) => res.send(receivedData));
 
 app.delete('/received/data', (req, res) => {
   receivedData = resetReceivedData();
-  res.sendStatus(200);
+  res.send({ status: 'OK' });
 });
 
 app.get('/received/aggregated/metrics/:pid', (req, res) => res.json(receivedData.aggregatedMetrics[req.params.pid]));
@@ -284,19 +281,19 @@ app.post('/reject-announce-attempts', (req, res) => {
   } else {
     rejectAnnounceAttempts = 1;
   }
-  res.send('OK');
+  res.send({ status: 'OK' });
 });
 
 app.delete('/discoveries', (req, res) => {
   rejectAnnounceAttempts = 0;
   discoveries = {};
-  res.send('OK');
+  res.send({ status: 'OK' });
 });
 
 app.post('/request/:pid', (req, res) => {
   requests[req.params.pid] = requests[req.params.pid] || [];
   requests[req.params.pid].push(req.body);
-  res.send('OK');
+  res.send({ status: 'OK' });
 });
 
 app.listen(port, () => {

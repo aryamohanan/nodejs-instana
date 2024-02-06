@@ -60,9 +60,7 @@ function waitUntilServerIsUp(useHttps, retryTime) {
             'X-INSTANA-L': '0'
           },
           ca: cert
-        }).then(response => {
-          return response.json();
-        }),
+        }).then(response => response.text()),
       retryTime
     );
   } catch (err) {

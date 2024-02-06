@@ -11,8 +11,8 @@ const _ = require('lodash');
 const fork = require('child_process').fork;
 const fs = require('fs');
 const path = require('path');
-// eslint-disable-next-line no-unused-vars
 const fetch = require('node-fetch');
+// eslint-disable-next-line no-unused-vars
 const request = require('request-promise');
 
 const config = require('../../../core/test/config');
@@ -42,6 +42,7 @@ class ProcessControls {
    * @property {boolean} [tracingEnabled]
    * @property {*} [agentControls]
    * @property {Object.<string, *} [env]
+   * @property {boolean} [responseIntext]
    */
 
   /**
@@ -133,6 +134,7 @@ class ProcessControls {
     }
 
     this.receivedIpcMessages = [];
+    this.responseIntext = opts.responseIntext;
   }
 
   getPort() {
@@ -242,29 +244,42 @@ class ProcessControls {
         opts.headers['X-INSTANA-L'] = '0';
       }
 
-      opts.url = baseUrl + (opts.path || '');
+      // opts.url = baseUrl + (opts.path || '');
       opts.json = true;
       opts.ca = cert;
-      return request(opts);
-      // let response;
-      // try {
-      //   return testUtils.retry(async () => {
-      //     const result = await fetch(opts.url, {
-      //       method: opts.method,
-      //       headers: opts.headers,
-      //       // body: opts.body,
-      //       path: opts.path,
-      //       ca: opts.ca,
-      //       qs: opts.qs,
-      //       simple: opts.simple
-      //       // json: opts.json
-      //     });
-      //     response = await result;
-      //     return result.json();
-      //  });
-      // } catch (error) {
-      //   return response;
-      // }
+      // return request(opts);
+      let response;
+      try {
+        // eslint-disable-next-line no-new
+        //  testUtils.delay(5).then(async () => {
+        //  await new Promise(resolve => setTimeout(resolve, 100));
+        // return testUtils.retry(async () => {
+        const result = await fetch(
+          baseUrl + (opts.path || ''),
+          opts
+          // {
+          //   method: opts.method,
+          //   headers: opts.headers,
+          //   body: opts.body,
+          //   path: opts.path,
+          //   ca: opts.ca,
+          //   qs: opts.qs,
+          //   simple: opts.simple,
+          //   json: opts.json
+          // }
+        );
+        response = await result;
+        if (this.responseIntext) {
+          return response.text();
+        }
+        return response.json();
+
+        //  });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.log('We caught an error, are you intrested?', error);
+        return response;
+      }
     }
   }
 

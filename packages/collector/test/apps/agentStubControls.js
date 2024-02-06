@@ -6,7 +6,7 @@
 'use strict';
 
 const spawn = require('child_process').spawn;
-const request = require('request-promise');
+const fetch = require('node-fetch');
 const portFinder = require('../test_util/portfinder');
 const path = require('path');
 const _ = require('lodash');
@@ -65,18 +65,15 @@ class AgentStubControls {
 
   async waitUntilAgentHasStarted() {
     const url = `http://127.0.0.1:${this.agentPort}`;
-
     // eslint-disable-next-line no-console
     console.log(`[AgentStubControls] starting: ${url}`);
 
     try {
-      await retry(() =>
-        request({
-          method: 'GET',
-          url
-        })
-      );
-
+      await retry(async () => {
+        fetch(url, {
+          method: 'GET'
+        });
+      });
       // eslint-disable-next-line no-console
       console.log('[AgentStubControls] started');
     } catch (err) {
@@ -107,100 +104,88 @@ class AgentStubControls {
   }
 
   getDiscoveries() {
-    return request({
+    return fetch(`http://127.0.0.1:${this.agentPort}/discoveries`, {
       method: 'GET',
-      url: `http://127.0.0.1:${this.agentPort}/discoveries`,
       json: true
-    });
+    }).then(response => response.json());
   }
 
   rejectAnnounceAttempts(rejectedAttempts = 1) {
-    return request({
-      method: 'POST',
-      url: `http://127.0.0.1:${this.agentPort}/reject-announce-attempts?attempts=${rejectedAttempts}`
+    return fetch(`http://127.0.0.1:${this.agentPort}/reject-announce-attempts?attempts=${rejectedAttempts}`, {
+      method: 'POST'
     });
   }
 
   deleteDiscoveries() {
-    return request({
-      method: 'DELETE',
-      url: `http://127.0.0.1:${this.agentPort}/discoveries`,
-      json: true
+    return fetch(`http://127.0.0.1:${this.agentPort}/discoveries`, {
+      method: 'DELETE'
     });
   }
 
   getReceivedData() {
-    return request({
-      method: 'GET',
-      url: `http://127.0.0.1:${this.agentPort}/received/data`,
-      json: true
-    });
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/data`, {
+      method: 'GET'
+    }).then(response => response.json());
   }
 
   getAggregatedMetrics(pid) {
-    return request({
-      method: 'GET',
-      url: `http://127.0.0.1:${this.agentPort}/received/aggregated/metrics/${pid}`,
-      json: true
-    });
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/aggregated/metrics/${pid}`, {
+      method: 'GET'
+    }).then(response => response.json());
   }
 
   getEvents() {
-    return request({
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/events`, {
       method: 'GET',
-      url: `http://127.0.0.1:${this.agentPort}/received/events`,
-      json: true
-    });
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => response.json());
   }
 
   getMonitoringEvents() {
-    return request({
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/monitoringEvents`, {
       method: 'GET',
-      url: `http://127.0.0.1:${this.agentPort}/received/monitoringEvents`,
-      json: true
-    });
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(response => response.json());
   }
 
   clearReceivedMonitoringEvents() {
-    return request({
-      method: 'DELETE',
-      url: `http://127.0.0.1:${this.agentPort}/received/monitoringEvents`
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/monitoringEvents`, {
+      method: 'DELETE'
     });
   }
 
   reset() {
-    return request({
+    return fetch(`http://127.0.0.1:${this.agentPort}/`, {
       method: 'DELETE',
-      url: `http://127.0.0.1:${this.agentPort}/`,
       json: true
     });
   }
 
   clearReceivedData() {
-    return request({
-      method: 'DELETE',
-      url: `http://127.0.0.1:${this.agentPort}/received/data`
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/data`, {
+      method: 'DELETE'
     });
   }
 
   clearReceivedTraceData() {
-    return request({
-      method: 'DELETE',
-      url: `http://127.0.0.1:${this.agentPort}/received/traces`
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/traces`, {
+      method: 'DELETE'
     });
   }
 
   clearReceivedProfilingData() {
-    return request({
-      method: 'DELETE',
-      url: `http://127.0.0.1:${this.agentPort}/received/profiles`
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/profiles`, {
+      method: 'DELETE'
     });
   }
 
   clearReceivedEvents() {
-    return request({
-      method: 'DELETE',
-      url: `http://127.0.0.1:${this.agentPort}/received/events`
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/events`, {
+      method: 'DELETE'
     });
   }
 
@@ -220,17 +205,15 @@ class AgentStubControls {
   }
 
   getTracingMetrics() {
-    return request({
+    return fetch(`http://127.0.0.1:${this.agentPort}/received/tracingMetrics`, {
       method: 'GET',
-      url: `http://127.0.0.1:${this.agentPort}/received/tracingMetrics`,
       json: true
-    });
+    }).then(response => response.json());
   }
 
   simulateDiscovery(pid) {
-    return request({
+    return fetch(`http://127.0.0.1:${this.agentPort}/com.instana.plugin.nodejs.discovery`, {
       method: 'PUT',
-      url: `http://127.0.0.1:${this.agentPort}/com.instana.plugin.nodejs.discovery`,
       json: true,
       body: {
         pid
@@ -239,21 +222,18 @@ class AgentStubControls {
   }
 
   addEntityData(pid, data) {
-    return request({
+    return fetch(`http://127.0.0.1:${this.agentPort}/com.instana.plugin.nodejs.${pid}`, {
       method: 'POST',
-      url: `http://127.0.0.1:${this.agentPort}/com.instana.plugin.nodejs.${pid}`,
       json: true,
       body: data
-    });
+    }).then(response => response.json());
   }
 
   addRequestForPid(pid, r) {
-    return request({
+    return fetch(`http://127.0.0.1:${this.agentPort}/request/${pid}`, {
       method: 'POST',
-      url: `http://127.0.0.1:${this.agentPort}/request/${pid}`,
-      json: true,
       body: r
-    });
+    }).then(response => response.json());
   }
 
   async getLastMetricValue(pid, _path) {

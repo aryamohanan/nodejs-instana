@@ -326,9 +326,13 @@ AbstractServerlessControl.prototype._getFromBackend = function _getFromBackend(u
 
 AbstractServerlessControl.prototype.resetBackend = function resetBackend() {
   if (this.backendHasBeenStarted) {
-    return fetch(`${this.backendBaseUrl}/received`, { method: 'DELETE', strictSSL: false }).then(response =>
-      response.json()
-    );
+    return fetch(`${this.backendBaseUrl}/received`, {
+      method: 'DELETE'
+    })
+      .then(response => response.json())
+      .catch(() => {
+        return [];
+      });
   } else {
     return Promise.resolve([]);
   }
@@ -340,9 +344,12 @@ AbstractServerlessControl.prototype.setResponsive = function setResponsive(respo
   }
   if (this.backendHasBeenStarted) {
     return fetch(`${this.backendBaseUrl}/responsive?responsive=${responsive}`, {
-      method: 'POST',
-      strictSSL: false
-    }).then(response => response.json());
+      method: 'POST'
+    })
+      .then(response => response.json())
+      .catch(() => {
+        return [];
+      });
   } else {
     return Promise.resolve([]);
   }
@@ -358,7 +365,11 @@ AbstractServerlessControl.prototype._getFromExtension = function _getFromExtensi
 
 AbstractServerlessControl.prototype.resetExtension = function resetExtension() {
   if (this.extensionHasBeenStarted) {
-    return fetch(`${this.extensionBaseUrl}/received`, { method: 'DELETE' }).then(response => response.json());
+    return fetch(`${this.extensionBaseUrl}/received`, { method: 'DELETE' })
+      .then(response => response.json())
+      .catch(() => {
+        return [];
+      });
   } else {
     return Promise.resolve([]);
   }

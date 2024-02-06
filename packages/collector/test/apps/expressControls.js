@@ -5,10 +5,9 @@
 
 'use strict';
 
-const errors = require('request-promise/errors');
+const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
-const request = require('request-promise');
 const spawn = require('child_process').spawn;
 const portfinder = require('../test_util/portfinder');
 const testUtils = require('../../../core/test/test_util');
@@ -53,25 +52,19 @@ exports.start = function start(opts = {}, retryTime = null) {
 
 function waitUntilServerIsUp(useHttps, retryTime) {
   try {
-    return testUtils
-      .retry(
-        () =>
-          request({
-            method: 'GET',
-            url: getBaseUrl(useHttps),
-            headers: {
-              'X-INSTANA-L': '0'
-            },
-            ca: cert
-          }),
-        retryTime
-      )
-      .then(resp => {
-        // eslint-disable-next-line no-console
-        console.log('[ExpressControls:start] started');
-
-        return resp;
-      });
+    return testUtils.retry(
+      () =>
+        fetch(getBaseUrl(useHttps), {
+          method: 'GET',
+          headers: {
+            'X-INSTANA-L': '0'
+          },
+          ca: cert
+        }).then(response => {
+          return response.json();
+        }),
+      retryTime
+    );
   } catch (err) {
     // eslint-disable-next-line no-console
     console.log(`[ExpressControls] Error waiting until server (${getBaseUrl(useHttps)}) is up: ${err.message}`);
@@ -87,20 +80,19 @@ exports.getPort = () => appPort;
 exports.getPid = () => expressApp.pid;
 
 exports.sendBasicRequest = opts =>
-  request({
+  fetch(`${getBaseUrl(opts.useHttps)}${opts.path}`, {
     method: opts.method,
-    url: getBaseUrl(opts.useHttps) + opts.path,
-    resolveWithFullResponse: opts.resolveWithFullResponse,
-    ca: cert
+    resolveWithFullResponse: opts.resolveWithFullResponse
+  }).then(response => {
+    return response.json();
   });
 
 exports.sendRequest = opts => {
   opts.responseStatus = opts.responseStatus || 200;
   opts.delay = opts.delay || 0;
   opts.headers = opts.headers || {};
-  return request({
+  return fetch(`${getBaseUrl(opts.useHttps)}${opts.path}?responseStatus=${opts.responseStatus}&delay=${opts.delay}`, {
     method: opts.method,
-    url: getBaseUrl(opts.useHttps) + opts.path,
     qs: {
       responseStatus: opts.responseStatus,
       delay: opts.delay,
@@ -109,35 +101,38 @@ exports.sendRequest = opts => {
       serverTimingArray: opts.serverTimingArray
     },
     headers: opts.headers,
-    resolveWithFullResponse: opts.resolveWithFullResponse,
-    ca: cert
-  }).catch(errors.StatusCodeError, reason => {
-    if (reason.statusCode === opts.responseStatus) {
-      return true;
-    }
-    throw reason;
-  });
+    resolveWithFullResponse: opts.resolveWithFullResponse
+  })
+    .then(response => {
+      return response.json();
+    })
+    .catch(response => {
+      if (response.status === opts.responseStatus) {
+        return true;
+      }
+      throw new Error(`Unexpected response status: ${response.status}`);
+    });
 };
 
 exports.setHealthy = useHttps =>
-  request({
-    method: 'POST',
-    url: `${getBaseUrl(useHttps)}/admin/set-to-healthy`,
-    ca: cert
+  fetch(`${getBaseUrl(useHttps)}/admin/set-to-healthy`, {
+    method: 'POST'
+  }).then(response => {
+    return response.json();
   });
 
 exports.setUnhealthy = useHttps =>
-  request({
-    method: 'POST',
-    url: `${getBaseUrl(useHttps)}/admin/set-to-unhealthy`,
-    ca: cert
+  fetch(`${getBaseUrl(useHttps)}/admin/set-to-unhealthy`, {
+    method: 'POST'
+  }).then(response => {
+    return response.json();
   });
 
 exports.setLogger = (useHttps, logFilePath) =>
-  request({
-    method: 'POST',
-    url: `${getBaseUrl(useHttps)}/set-logger?logFilePath=${encodeURIComponent(logFilePath)}`,
-    ca: cert
+  fetch(`${getBaseUrl(useHttps)}/set-logger?logFilePath=${encodeURIComponent(logFilePath)}`, {
+    method: 'POST'
+  }).then(response => {
+    return response.json();
   });
 
 function getBaseUrl(useHttps) {

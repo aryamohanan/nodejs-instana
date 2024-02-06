@@ -11,6 +11,8 @@ const _ = require('lodash');
 const fork = require('child_process').fork;
 const fs = require('fs');
 const path = require('path');
+// eslint-disable-next-line no-unused-vars
+const fetch = require('node-fetch');
 const request = require('request-promise');
 
 const config = require('../../../core/test/config');
@@ -20,7 +22,9 @@ const globalAgent = require('../globalAgent');
 const portFinder = require('./portfinder');
 const sslDir = path.join(__dirname, '..', 'apps', 'ssl');
 const cert = fs.readFileSync(path.join(sslDir, 'cert'));
-
+// To address the certificate authorization issue with node-fetch, process.env.NODE_TLS_REJECT_UNAUTHORIZED
+// was set to '0'. Refer to the problem discussed in https://github.com/node-fetch/node-fetch/issues/19
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 class ProcessControls {
   /**
    * @typedef {Object} ProcessControlsOptions
@@ -225,7 +229,7 @@ class ProcessControls {
    *   }
    * }} The request options
    */
-  sendRequest(opts = {}) {
+  async sendRequest(opts = {}) {
     const requestOptions = Object.assign({}, opts);
     const baseUrl = this.getBaseUrl(opts);
     requestOptions.baseUrl = baseUrl;
@@ -241,8 +245,26 @@ class ProcessControls {
       opts.url = baseUrl + (opts.path || '');
       opts.json = true;
       opts.ca = cert;
-
       return request(opts);
+      // let response;
+      // try {
+      //   return testUtils.retry(async () => {
+      //     const result = await fetch(opts.url, {
+      //       method: opts.method,
+      //       headers: opts.headers,
+      //       // body: opts.body,
+      //       path: opts.path,
+      //       ca: opts.ca,
+      //       qs: opts.qs,
+      //       simple: opts.simple
+      //       // json: opts.json
+      //     });
+      //     response = await result;
+      //     return result.json();
+      //  });
+      // } catch (error) {
+      //   return response;
+      // }
     }
   }
 

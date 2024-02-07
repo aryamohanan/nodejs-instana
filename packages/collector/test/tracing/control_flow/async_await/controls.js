@@ -49,21 +49,14 @@ exports.stop = async () => {
 };
 
 function waitUntilServerIsUp() {
-  return testUtils
-    .retry(() =>
-      fetch(`http://127.0.0.1:${appPort}`, {
-        method: 'GET',
-        headers: {
-          'X-INSTANA-L': '0'
-        }
-      })
-    )
-    .then(response => {
-      // eslint-disable-next-line no-console
-      console.log('[AsyncAwaitControls] started');
-
-      return response.json();
-    });
+  return testUtils.retry(() =>
+    fetch(`http://127.0.0.1:${appPort}`, {
+      method: 'GET',
+      headers: {
+        'X-INSTANA-L': '0'
+      }
+    })
+  );
 }
 
 exports.getPid = () => expressApp.pid;
@@ -72,7 +65,6 @@ exports.getPort = () => appPort;
 exports.sendRequest = () =>
   fetch(`http://127.0.0.1:${appPort}/getSomething`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json' // Add headers as needed
-    }
-  }).then(response => response.json()); // Adjust this based on your needs
+    url: `http://127.0.0.1:${appPort}/getSomething`,
+    resolveWithFullResponse: true
+  });

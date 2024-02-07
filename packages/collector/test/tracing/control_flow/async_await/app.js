@@ -6,6 +6,7 @@
 'use strict';
 
 const fetch = require('node-fetch');
+const rp = require('request-promise');
 
 require('../../../..')({
   agentPort: process.env.AGENT_PORT,
@@ -58,15 +59,6 @@ async function executeCallSequence() {
 }
 
 async function sendRequest(requestOptions) {
-  if (process.env.USE_REQUEST_PROMISE === 'true') {
-    return fetch(`http://127.0.0.1:${process.env.UPSTREAM_PORT}${requestOptions.uri}`, {
-      method: requestOptions.method,
-      headers: requestOptions.headers,
-      simple: true,
-      resolveWithFullResponse: true
-    }).then(response => response.json());
-  }
-
   const url = `${requestOptions.uri}${requestOptions.query ? `?${new URLSearchParams(requestOptions.query)}` : ''}`;
   const response = await fetch(url, {
     method: requestOptions.method

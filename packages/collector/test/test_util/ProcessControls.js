@@ -256,7 +256,7 @@ class ProcessControls {
         const contentType = result.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           response = await result.json();
-        } else if (contentType && contentType.includes('application/text')) {
+        } else if (contentType && contentType.includes('text/html')) {
           response = await result.text();
         } else {
           response = {

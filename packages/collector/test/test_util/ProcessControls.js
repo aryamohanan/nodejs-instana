@@ -244,6 +244,10 @@ class ProcessControls {
       }
 
       opts.url = baseUrl + (opts.path || '');
+      if (opts.qs) {
+        const queryParams = new URLSearchParams(opts.qs).toString();
+        opts.url = opts.url.includes('?') ? `${opts.url}&${queryParams}` : `${opts.url}?${queryParams}`;
+      }
       opts.json = true;
       opts.ca = cert;
       let response;
@@ -252,13 +256,20 @@ class ProcessControls {
         const contentType = result.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           response = await result.json();
-        } else {
+        } else if (contentType && contentType.includes('application/text')) {
           response = await result.text();
+        } else {
+          response = {
+            body: await result.text(),
+            status: result.status,
+            headers: result.headers
+          };
         }
         return response;
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.log('err===========', error);
+        if (error.code === 'ECONNRESET' || error.type === 'request-timeout') {
+          throw error;
+        }
         return response;
       }
     }

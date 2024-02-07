@@ -23,7 +23,7 @@ function waitUntilServerIsUp() {
       headers: {
         'X-INSTANA-L': '0'
       }
-    }).then(response => response.json())
+    }).then(response => response.text())
   );
 }
 
@@ -70,7 +70,7 @@ exports.sendRequest = opts => {
         url: opts.target,
         httpLib: opts.httpLib
       }
-    }).then(response => response.json());
+    }).then(response => response.text());
   } catch (error) {
     return error;
   }

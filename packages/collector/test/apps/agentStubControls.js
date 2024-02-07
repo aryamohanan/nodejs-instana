@@ -214,10 +214,12 @@ class AgentStubControls {
   simulateDiscovery(pid) {
     return fetch(`http://127.0.0.1:${this.agentPort}/com.instana.plugin.nodejs.discovery`, {
       method: 'PUT',
-      json: true,
-      body: {
-        pid
-      }
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        pid: pid
+      })
     }).then(response => response.json());
   }
 

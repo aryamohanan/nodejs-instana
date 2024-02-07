@@ -219,7 +219,7 @@ app.post('/com.instana.plugin.generic.agent-monitoring-event', function postMoni
 function checkExistenceOfKnownPid(fn) {
   return (req, res) => {
     const pid = req.params.pid;
-    if (!requests[pid] || requests[pid].length === 0) {
+    if (!discoveries[pid] || discoveries[pid].length === 0) {
       logger.debug('Rejecting access for PID %s, not a known discovery', pid);
       return res.status(400).send(`Unknown discovery with pid: ${pid}`);
     }

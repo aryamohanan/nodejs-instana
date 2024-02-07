@@ -48,7 +48,7 @@ function waitUntilServerIsUp() {
       headers: {
         'X-INSTANA-L': '0'
       }
-    }).then(response => response.json())
+    })
   );
 }
 
@@ -57,54 +57,64 @@ exports.getPid = () => app.pid;
 exports.sendToQueue = (message, headers) =>
   fetch(`http://127.0.0.1:${appPort}/send-to-queue`, {
     method: 'POST',
-    json: true,
     simple: true,
-    headers,
-    body: {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    },
+    body: JSON.stringify({
       message
-    }
-  });
+    })
+  }).then(response => response.text());
 
 exports.publish = (message, headers) =>
   fetch(`http://127.0.0.1:${appPort}/publish`, {
     method: 'POST',
-    json: true,
     simple: true,
-    headers,
-    body: {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    },
+    body: JSON.stringify({
       message
-    }
-  });
+    })
+  }).then(response => response.text());
 
 exports.sendToGetQueue = (message, headers) =>
   fetch(`http://127.0.0.1:${appPort}/send-to-get-queue`, {
     method: 'POST',
-    json: true,
     simple: true,
-    headers,
-    body: {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    },
+    body: JSON.stringify({
       message
-    }
-  });
+    })
+  }).then(response => response.text());
 
 exports.publishToConfirmChannelWithoutCallback = (message, headers) =>
   fetch(`http://127.0.0.1:${appPort}/publish-to-confirm-channel-without-callback`, {
     method: 'POST',
-    json: true,
     simple: true,
-    headers,
-    body: {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    },
+    body: JSON.stringify({
       message
-    }
-  });
+    })
+  }).then(response => response.text());
 
 exports.sendToConfirmQueue = (message, headers) =>
   fetch(`http://127.0.0.1:${appPort}/send-to-confirm-queue`, {
     method: 'POST',
-    json: true,
     simple: true,
-    headers,
-    body: {
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    },
+    body: JSON.stringify({
       message
-    }
-  });
+    })
+  }).then(response => response.text());

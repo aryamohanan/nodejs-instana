@@ -6,7 +6,6 @@
 'use strict';
 
 const fetch = require('node-fetch');
-const rp = require('request-promise');
 
 require('../../../..')({
   agentPort: process.env.AGENT_PORT,

@@ -208,7 +208,7 @@ app.post('/request', async (req, res) => {
     try {
       // try to publish without a subject to cause an error
       if (IS_LATEST) {
-        await natsClient.fetch(null, sc.encode('awaiting reply nats2'));
+        await natsClient.request(null, sc.encode('awaiting reply nats2'));
         afterPublish(res, null);
       } else {
         natsPublishMethod(null, 'awaiting reply', requestCallback);
@@ -225,12 +225,12 @@ app.post('/request', async (req, res) => {
       // the client will create a normal subscription for receiving the response to
       // a generated inbox subject before the request is published
       await natsClient
-        .fetch('publish-test-subject', sc.encode('awaiting reply'), { reply: 'test', noMux: true })
+        .request('publish-test-subject', sc.encode('awaiting reply'), { reply: 'test', noMux: true })
         .then(m => {
           afterPublish(res, null, sc.decode(m.data), true);
         });
     } else {
-      await natsClient.fetch('publish-test-subject', sc.encode('awaiting reply'), { noMux: false }).then(m => {
+      await natsClient.request('publish-test-subject', sc.encode('awaiting reply'), { noMux: false }).then(m => {
         afterPublish(res, null, sc.decode(m.data), true);
       });
     }

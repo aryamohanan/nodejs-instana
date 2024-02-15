@@ -11,7 +11,7 @@ const app = express();
 const port = require('../../../../../test_util/app-port')();
 const streamName = process.env.AWS_KINESIS_STREAM_NAME || 'nodejs-team';
 const agentPort = process.env.INSTANA_AGENT_PORT;
-import fetch from 'node-fetch';
+const fetch = require('node-fetch');
 const AWS = require('aws-sdk');
 const logPrefix = `AWS SDK v2 Kinesis (${process.pid}):\t`;
 const log = require('@instana/core/test/test_util/log').getLogger(logPrefix);

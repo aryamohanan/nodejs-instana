@@ -1,5 +1,5 @@
 name: Slack Post
-run-name: Posting the release in to slack
+run-name: Posting the release into Slack
 on:
   release:
     types: [published]
@@ -9,13 +9,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Send success message to slack release channel
+      - name: Send success message to Slack release channel
         uses: slackapi/slack-github-action@v1.24.0
         with:
           channel-id: C06JPF2LGQK
           payload: |
             {
-              "text": ":mega: :package: Version 1of the Node.js tracer (npm package @instana/collector and friends) has been released! :star-struck: :tada:",
+              "text": ":mega: :package: Version 1 of the Node.js tracer (npm package @instana/collector and friends) has been released! :star-struck: :tada:",
               "attachments": [{
                 "color": "good",
                 "fields": [
@@ -24,7 +24,8 @@ jobs:
                     "value": "<https://github.com/instana/nodejs/releases>"
                   },
                   {
-                  "value": "Hey <@arya.mohanan@ibm.com> ,  Please update the release notes. Thank you!"
+                    "title": "Message",
+                    "value": "Hey <@arya.mohanan@ibm.com>, please update the release notes. Thank you!"
                   }
                 ]
               }]

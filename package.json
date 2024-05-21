@@ -143,6 +143,7 @@
     "eslint-plugin-instana": "file:./misc/eslint-plugin",
     "eslint-plugin-mocha": "^10.1.0",
     "eslint-plugin-monorepo-cop": "^1.0.2",
+    "esm-square-calculator": "^1.1.0",
     "express": "^4.19.2",
     "express-winston": "^4.2.0",
     "fastify": "^4.27.0",
@@ -155,6 +156,7 @@
     "graphql-tag": "2.12.6",
     "graphql-ws": "^5.16.0",
     "husky": "^7.0.4",
+    "import-in-the-middle": "^1.7.4",
     "ioredis": "^5.4.1",
     "js-yaml": "^4.1.0",
     "kafka-node": "^5.0.0",
@@ -237,8 +239,7 @@
     "kafka-avro": "^3.1.1",
     "node-rdkafka": "^3.0.1",
     "pg-native": "^3.0.1",
-    "prisma": "^5.14.0",
-    "@types/cacheable-request": "8.3.1"
+    "prisma": "^5.14.0"
   },
   "overrides": {
     "nx": "15.8.9",

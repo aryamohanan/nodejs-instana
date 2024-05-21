@@ -7,6 +7,9 @@
 
 const Module = require('module');
 const path = require('path');
+// eslint-disable-next-line instana/no-unsafe-require, import/no-extraneous-dependencies
+const iitmHook = require('import-in-the-middle');
+const calculator = require('../tracing/instrumentation/frameworks/esm-square-calculator');
 
 /**
  * @typedef {Object} FileNamePatternTransformer
@@ -48,36 +51,44 @@ logger = require('../logger').getLogger('util/requireHook', newLogger => {
 // eslint-disable-next-line no-unused-vars
 exports.init = function (config) {
   /** @type {*} */ (Module)._load = patchedModuleLoad;
+  setIitmHook();
 };
 
 /**
  * @param {string} moduleName
  */
 function patchedModuleLoad(moduleName) {
+  // console.log('This is the modulename',moduleName);
   // CASE: when using ESM, the Node runtime passes a full path to Module._load
   //       we try to grab the module name to being able to patch the target module
   //       with our instrumentation
   // CASE: we ignore all file endings, which we are not interested in. Any module can load any file.
   if (path.isAbsolute(moduleName) && ['.node', '.json', '.ts'].indexOf(path.extname(moduleName)) === -1) {
-    // EDGE CASE for ESM: mysql2/promise.js
-    if (moduleName.indexOf('node_modules/mysql2/promise.js') !== -1) {
-      moduleName = 'mysql2/promise';
-    } else {
-      // e.g. path is node_modules/@elastic/elasicsearch/index.js
-      let match = moduleName.match(/node_modules\/(@.*?(?=\/)\/.*?(?=\/))/);
-
-      if (match && match.length > 1) {
-        moduleName = match[1];
-      } else {
-        // e.g. path is node_modules/mysql/lib/index.js
-        match = moduleName.match(/node_modules\/(.*?(?=\/))/);
-
-        if (match && match.length > 1) {
-          moduleName = match[1];
-        }
-      }
-    }
+    console.log('returning from the requirehook early.........', moduleName);
+    return origLoad.apply(Module, arguments);
   }
+  if (moduleName.includes('esm')) {
+    console.log('this is http modulesss', moduleName);
+  }
+  //   // EDGE CASE for ESM: mysql2/promise.js
+  //   if (moduleName.indexOf('node_modules/mysql2/promise.js') !== -1) {
+  //     moduleName = 'mysql2/promise';
+  //   } else {
+  //     // e.g. path is node_modules/@elastic/elasicsearch/index.js
+  //     let match = moduleName.match(/node_modules\/(@.*?(?=\/)\/.*?(?=\/))/);
+
+  //     if (match && match.length > 1) {
+  //       moduleName = match[1];
+  //     } else {
+  //       // e.g. path is node_modules/mysql/lib/index.js
+  //       match = moduleName.match(/node_modules\/(.*?(?=\/))/);
+
+  //       if (match && match.length > 1) {
+  //         moduleName = match[1];
+  //       }
+  //     }
+  //   }
+  // }
 
   // First attempt to always get the module via the original implementation
   // as this action may fail. The original function populates the module cache.
@@ -201,4 +212,26 @@ function buildFileNamePatternReducer(agg, pathSegment) {
   }
   agg += pathSegment;
   return agg;
+}
+
+function setIitmHook() {
+  console.log('Applying hook to  calculator', calculator);
+  const instrumentedModule = {
+    moduleName: 'esm-square-calculator', // Update the moduleName if necessary
+    hookFn: calculator.instrument
+  };
+
+  // @ts-ignore
+  iitmHook([instrumentedModule.moduleName], function (exports, name, basedir) {
+    console.log(`Hooking enabled for module ${name} and base directory ${basedir}`);
+
+    if (exports && exports.default) {
+      console.log('Applying hook to default export');
+      exports.default = instrumentedModule.hookFn(exports.default);
+      return exports;
+    } else {
+      console.log('Applying hook to module exports');
+      return instrumentedModule.hookFn(exports);
+    }
+  });
 }

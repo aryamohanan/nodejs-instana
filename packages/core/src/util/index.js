@@ -18,5 +18,6 @@ module.exports = {
   propertySizes: require('./propertySizes'),
   requireHook: require('./requireHook'),
   slidingWindow: require('./slidingWindow'),
-  stackTrace: require('./stackTrace')
+  stackTrace: require('./stackTrace'),
+  tracingHook: require('./tracingHook')
 };

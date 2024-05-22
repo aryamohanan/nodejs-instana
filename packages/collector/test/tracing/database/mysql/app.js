@@ -37,7 +37,6 @@ if (driverModeEnvVar === 'mysql') {
 
 const mysql = require(driver);
 
-const fetch = require('node-fetch');
 const bodyParser = require('body-parser');
 const express = require('express');
 const morgan = require('morgan');

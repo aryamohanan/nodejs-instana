@@ -7,7 +7,6 @@
 
 'use strict';
 
-const fetch = require('node-fetch');
 const { promises: fs } = require('fs');
 const http = require('http');
 const isWhitespace = require('is-whitespace');

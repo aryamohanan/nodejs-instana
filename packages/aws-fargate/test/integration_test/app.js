@@ -12,7 +12,6 @@ process.on('SIGTERM', () => {
 });
 
 const http = require('http');
-const fetch = require('node-fetch');
 
 const { sendToParent } = require('../../../core/test/test_util');
 

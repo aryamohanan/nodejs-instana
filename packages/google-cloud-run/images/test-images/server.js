@@ -7,8 +7,6 @@
 
 const http = require('http');
 
-const fetch = require('node-fetch');
-
 const app = new http.Server();
 // eslint-disable-next-line instana/no-unsafe-require, import/no-extraneous-dependencies
 const getAppPort = require('@instana/collector/test/test_util/app-port');

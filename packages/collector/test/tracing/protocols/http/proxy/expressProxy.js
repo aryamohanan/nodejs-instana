@@ -26,7 +26,7 @@ require('../../../../..')({
 });
 
 const express = require('express');
-const fetch = require('node-fetch');
+
 const port = require('../../../../test_util/app-port')();
 const app = express();
 

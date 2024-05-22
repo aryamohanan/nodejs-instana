@@ -34,7 +34,6 @@ let connection;
 let channel;
 let confirmChannel;
 
-const fetch = require('node-fetch');
 const bodyParser = require('body-parser');
 const express = require('express');
 const port = require('../../../test_util/app-port')();

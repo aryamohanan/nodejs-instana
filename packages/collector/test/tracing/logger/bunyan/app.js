@@ -25,7 +25,6 @@ instana({
   }
 });
 
-const fetch = require('node-fetch');
 const bodyParser = require('body-parser');
 const express = require('express');
 const morgan = require('morgan');

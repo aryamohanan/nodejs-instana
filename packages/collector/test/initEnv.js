@@ -47,3 +47,6 @@ Object.keys(DEFAULT_ENV_VALUES).forEach(key => {
     process.env[key] = DEFAULT_ENV_VALUES[key];
   }
 });
+if (!global.fetch) {
+  global.fetch = require('node-fetch-v2');
+}

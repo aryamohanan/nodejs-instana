@@ -21,7 +21,7 @@ const instana = require('../../../..')({
 
 const amqp = require('amqplib/callback_api');
 const a = require('async');
-const fetch = require('node-fetch');
+
 const bail = require('./amqpUtil').bail;
 const exchange = require('./amqpUtil').exchange;
 const queueName = require('./amqpUtil').queueName;

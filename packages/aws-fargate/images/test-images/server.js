@@ -11,7 +11,6 @@ const http = require('http');
 // for the presence of a node_modules directory in the lookup code that heuristically finds the main package.json file.
 // In Fargate, it is not 100% guaranteed that there is such a file, since @instana/aws-fargate is not added as a
 // dependency but pre-required.
-const fetch = require('node-fetch');
 
 const app = new http.Server();
 // eslint-disable-next-line instana/no-unsafe-require, import/no-extraneous-dependencies

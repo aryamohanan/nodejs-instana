@@ -18,7 +18,7 @@ require('../../../..')();
 
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
+
 const { parse } = require('url');
 
 const http2Promise = require('../../../test_util/http2Promise');

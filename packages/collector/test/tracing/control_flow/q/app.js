@@ -16,7 +16,6 @@ const instana = require('../../../..')();
 const fs = require('fs');
 const path = require('path');
 
-const fetch = require('node-fetch');
 const bodyParser = require('body-parser');
 const EventEmitter = require('events');
 const express = require('express');

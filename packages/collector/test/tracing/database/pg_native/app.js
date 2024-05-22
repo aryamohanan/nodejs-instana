@@ -18,7 +18,7 @@ require('../../../..')();
 const Client = require('pg-native');
 const express = require('express');
 const morgan = require('morgan');
-const fetch = require('node-fetch');
+
 const bodyParser = require('body-parser');
 const port = require('../../../test_util/app-port')();
 

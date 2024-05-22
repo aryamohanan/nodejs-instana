@@ -16,7 +16,6 @@ process.on('SIGTERM', () => {
 
 const instana = require('../../../..')();
 
-const fetch = require('node-fetch');
 const bodyParser = require('body-parser');
 const EventEmitter = require('events');
 const Promise = require('bluebird');

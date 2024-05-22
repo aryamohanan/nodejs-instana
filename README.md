@@ -49,7 +49,7 @@ If something is not working as expected or you have a question, instead of openi
 
 The documentation for Instana's Node.js support is available on [Node.js page](https://www.ibm.com/docs/en/instana-observability/current?topic=technologies-monitoring-nodejs) of the [Instana documentation portal](https://www.ibm.com/docs/en/instana-observability/current).
 
-Here are a few more quick links
+Here are a few more quick links:
 
 * [Installation](https://www.ibm.com/docs/en/instana-observability/current?topic=nodejs-collector-installation)
 * [Native Addons: Profiling, Garbage Collection and Event Loop Information](https://www.ibm.com/docs/en/instana-observability/current?topic=nodejs-collector-installation#native-add-ons)

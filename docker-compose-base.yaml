@@ -1,4 +1,8 @@
 version: '2'
+networks:
+  app-tier:
+    driver: bridge
+    
 services:
   redis:
     image: redis:5.0.14
@@ -35,51 +39,82 @@ services:
       discovery.type: single-node
       ES_JAVA_OPTS: "-Xms500m -Xmx500m"
       xpack.security.enabled: 'false'
-
-  zookeeper:
-    image: zookeeper:3.9.2
-    platform: linux/amd64
+# refs https://stackoverflow.com/questions/67181738/docker-kafka-on-macos-m1-issues-stuck-on-configuring
+   kafka:
+    image: 'bitnami/kafka:latest'
+    container_name: kafka
+    hostname: kafka
     ports:
-      - 2181:2181
-
-  kafka:
-    image: wurstmeister/kafka:2.12-2.2.1
-    platform: linux/amd64
-    ports:
-      - 9092:9092
-      - 29092:29092
-    depends_on:
-      - "zookeeper"
-    hostname: kafka0
+      - '9092:9092'
+    networks:
+      - app-tier
     environment:
-
-      KAFKA_LISTENERS: EXTERNAL://:9092,PLAINTEXT://:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka0:29092,EXTERNAL://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      # Leave the internal listener mapped as PLAINTEXT to avoid issues in schema-registry:
-      # https://github.com/confluentinc/schema-registry/issues/648#issuecomment-398032429
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:29093
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_CREATE_TOPICS: "test:1:1,test-topic-1:1:1,test-topic-2:1:1,test-batch-topic-1:1:1,test-batch-topic-2:1:1,rdkafka-topic:1:1,kafka-avro-topic:1:1"
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./bin:/nodejs-collector-bin
-    command: ["/nodejs-collector-bin/wait-for-it.sh", "-s", "-t", "120", "zookeeper:2181", "--", "start-kafka.sh"]
 
-  schema-registry:
-    image: confluentinc/cp-schema-registry:4.1.0
-    platform: linux/amd64
-    hostname: schema-registry
-    depends_on:
-      - "kafka"
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
     ports:
-      - "8081:8081"
+      - "8090:8080"
+    depends_on:
+      - kafka
+    networks:
+      - app-tier
     environment:
-      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka0:29092"
-      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: kafka:29092
+
+  # zookeeper:
+  #   image: zookeeper:3.9.2
+  #   platform: linux/amd64
+  #   ports:
+  #     - 2181:2181
+
+  # kafka:
+  #   image: wurstmeister/kafka:2.12-2.2.1
+  #   platform: linux/amd64
+  #   ports:
+  #     - 9092:9092
+  #     - 29092:29092
+  #   depends_on:
+  #     - "zookeeper"
+  #   hostname: kafka0
+  #   environment:
+
+  #     KAFKA_LISTENERS: EXTERNAL://:9092,PLAINTEXT://:29092
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka0:29092,EXTERNAL://localhost:9092
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     # Leave the internal listener mapped as PLAINTEXT to avoid issues in schema-registry:
+  #     # https://github.com/confluentinc/schema-registry/issues/648#issuecomment-398032429
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+  #     KAFKA_CREATE_TOPICS: "test:1:1,test-topic-1:1:1,test-topic-2:1:1,test-batch-topic-1:1:1,test-batch-topic-2:1:1,rdkafka-topic:1:1,kafka-avro-topic:1:1"
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ./bin:/nodejs-collector-bin
+  #   command: ["/nodejs-collector-bin/wait-for-it.sh", "-s", "-t", "120", "zookeeper:2181", "--", "start-kafka.sh"]
+
+  # schema-registry:
+  #   image: confluentinc/cp-schema-registry:4.1.0
+  #   platform: linux/amd64
+  #   hostname: schema-registry
+  #   depends_on:
+  #     - "kafka"
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
+  #     SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka0:29092"
+  #     SCHEMA_REGISTRY_HOST_NAME: schema-registry
 
   mysql:
     image: mysql:8.0.1

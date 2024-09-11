@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: check-pre-release-task
+  namespace: default
+spec:
+  params:
+    - name: continuous-delivery-context-secret
+      value: $(params.continuous-delivery-context-secret)
+    - name: type
+      value: $(params.type)
+    - name: node-version
+      value: $(params.node-version)
+  workspaces:
+    - name: output
+      mountPath: /artifacts
+  steps:
+    - name: execute       
+      image: node:$(params.node-version)
+      env:
+        - name: SLACK_TOKEN_NODEJS_TEAM
+          valueFrom:
+            secretKeyRef:
+              name: $(params.continuous-delivery-context-secret)
+              key: "SLACK_TOKEN_NODEJS_TEAM"
+        - name: GH_ENTERPRISE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.continuous-delivery-context-secret)
+              key: "GH_ENTERPRISE_TOKEN"
+      script: |
+        #!/bin/sh
+
+        ARTIFACTS_PATH="$(workspaces.output.path)"
+        cd $ARTIFACTS_PATH
+        
+        echo "Running script to check Node.js pre-releases..."
+        node bin/notify-nodejs-pre-releases.js

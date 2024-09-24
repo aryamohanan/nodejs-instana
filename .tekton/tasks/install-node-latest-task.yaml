@@ -1,0 +1,79 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: install-node-latest
+spec:
+  params:
+    - name: node-version
+      value: $(params.node-version)
+    - name: npm-version
+      value: $(params.npm-version)
+  workspaces:
+    - name: output
+      mountPath: /artifacts
+  steps:
+    - name: execute
+      image: node:20  # Use a more complete Node.js image
+      script: |
+        #!/bin/bash
+
+        # Get the Node.js version to install
+        NODE_VERSION="$(inputs.params.node-version)"
+        echo "Node.js version to install: $NODE_VERSION"
+
+        # Install NVM if not already installed
+        if ! command -v nvm &> /dev/null; then
+          echo "NVM not found. Installing NVM..."
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          echo "NVM installed."
+        else
+          echo "NVM is already installed."
+        fi
+
+        # Attempt to install the specified Node.js version using the RC mirror
+        echo "Attempting to install Node.js version $NODE_VERSION using RC mirror..."
+        NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/rc nvm install "$NODE_VERSION" || {
+          echo "RC installation failed. Attempting to install Node.js version $NODE_VERSION using Nightly mirror..."
+          NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/nightly nvm install v23
+        }
+
+        # Set the installed version as default
+        echo "Setting Node.js version $NODE_VERSION as default..."
+        # nvm use "$NODE_VERSION"
+        # nvm alias default "$NODE_VERSION"
+
+        # Echo the installed Node.js version
+        echo "Node.js version installed:"
+        node -v  # Display the Node.js version
+
+        echo "Node: $(node --version)"
+
+        if [ -n "$(params.npm-version)" ]; then
+          npm install npm@$(params.npm-version) -g
+        fi
+
+        echo "NPM: $(npm --version)"
+
+    # - name: send-slack-notification
+    #   image: curlimages/curl  # Using a curl image to send the notification
+    #   script: |
+    #     #!/bin/sh
+
+    #     SLACK_TOKEN="$(inputs.params.slack-token)"
+    #     NODE_VERSION="$(inputs.params.node-version)"
+    #     SLACK_CHANNEL="C07L6QGAHML"
+    #     SLACK_API_URL="https://slack.com/api/chat.postMessage"
+
+    #     if [ -z "$SLACK_TOKEN" ]; then
+    #       echo "No Slack token provided, skipping notification."
+    #       exit 0
+    #     fi
+
+    #     MESSAGE="Node.js version $NODE_VERSION was installed."
+
+    #     curl -X POST -H "Authorization: Bearer $SLACK_TOKEN" \
+    #       -H 'Content-type: application/json' \
+    #       --data "{\"channel\":\"$SLACK_CHANNEL\",\"text\":\"$MESSAGE\"}" \
+    #       $SLACK_API_URL

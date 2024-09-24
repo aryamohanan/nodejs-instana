@@ -20,7 +20,7 @@ spec:
       mountPath: /artifacts
   steps:
     - name: check-node-version
-      image: alpha
+      image: alpine:latest
       script: |
         #!/bin/bash
         echo "Checking Node.js version..."

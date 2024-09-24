@@ -19,6 +19,13 @@ spec:
     - name: output
       mountPath: /artifacts
   steps:
+    - name: check-node-version
+      image: alpha
+      script: |
+        #!/bin/bash
+        echo "Checking Node.js version..."
+        node -v
+
     - name: audit
       image: node:$(params.node-version)
       script: |

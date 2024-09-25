@@ -42,14 +42,3 @@ spec:
 
         # Use the installed version
         nvm use "$NODE_VERSION"
-
-        # Create symlinks for Node.js and npm in the output workspace
-        mkdir -p /artifacts/bin
-        ln -s "$NVM_DIR/versions/node/$NODE_VERSION/bin/node" /artifacts/bin/node
-        ln -s "$NVM_DIR/versions/node/$NODE_VERSION/bin/npm" /artifacts/bin/npm
-
-        # Display the installed versions
-        echo "Node.js version installed:"
-        /artifacts/bin/node -v
-        echo "NPM version installed:"
-        /artifacts/bin/npm -v

@@ -63,11 +63,9 @@ spec:
             secretKeyRef:
               name: $(params.continuous-delivery-context-secret)
               key: "AZURE_STORAGE_ACCOUNT_KEY"
-      image: ubuntu:latest
+      image: aryamohanan/node-nightly-image:latest
       script: |
         #!/bin/bash
-        # Setup Node.js environment using symlinks from the output workspace
-        export PATH="/artifacts/bin:$PATH"
 
         # Display the Node.js and npm versions
         echo "Using Node.js version: $(node -v)"

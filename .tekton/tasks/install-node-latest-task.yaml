@@ -20,7 +20,7 @@ spec:
         #!/bin/bash
 
         # Get the Node.js version to install
-        NODE_VERSION="$(params.node-version)"
+        NODE_VERSION="v23"
         echo "Node.js version to install: $NODE_VERSION"
 
         # Install NVM if not already installed

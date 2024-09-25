@@ -28,6 +28,9 @@ spec:
           curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        else
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         fi
 
         # Install the specified Node.js version using the RC mirror
@@ -37,10 +40,13 @@ spec:
           NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/nightly nvm install "$NODE_VERSION"
         }
 
+        # Use the installed version
+        nvm use "$NODE_VERSION"
+
         # Create symlinks for Node.js and npm in the output workspace
         mkdir -p /artifacts/bin
-        ln -s "$HOME/.nvm/versions/node/$NODE_VERSION/bin/node" /artifacts/bin/node
-        ln -s "$HOME/.nvm/versions/node/$NODE_VERSION/bin/npm" /artifacts/bin/npm
+        ln -s "$NVM_DIR/versions/node/$NODE_VERSION/bin/node" /artifacts/bin/node
+        ln -s "$NVM_DIR/versions/node/$NODE_VERSION/bin/npm" /artifacts/bin/npm
 
         # Display the installed versions
         echo "Node.js version installed:"

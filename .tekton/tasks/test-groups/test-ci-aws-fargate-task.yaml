@@ -63,23 +63,18 @@ spec:
             secretKeyRef:
               name: $(params.continuous-delivery-context-secret)
               key: "AZURE_STORAGE_ACCOUNT_KEY"
-      image: node:$(params.node-version)
+      image: ubuntu:latest
       script: |
         #!/bin/bash
-        # Load the Node.js version from the artifacts
-        NODE_VERSION=$(cat /artifacts/node-version)
-        echo "Using Node.js version: $NODE_VERSION"
+        # Setup Node.js environment using symlinks from the output workspace
+        export PATH="/artifacts/bin:$PATH"
 
-        # Set the environment variable to use the specific Node.js version
-        export NVM_DIR="$HOME/.nvm"
-        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-        
-        # Use NVM to set the correct Node.js version
-        nvm use "$NODE_VERSION"
+        # Display the Node.js and npm versions
+        echo "Using Node.js version: $(node -v)"
+        echo "Using NPM version: $(npm -v)"
 
-        # Check versions
-        echo "Node version: $(node -v)"
-        echo "NPM version: $(npm -v)"
+        # You can include any commands you want to run below
+        echo "The installed Node.js and npm are ready for use."
 
         ARTIFACTS_PATH="$(workspaces.output.path)"
         cd $ARTIFACTS_PATH

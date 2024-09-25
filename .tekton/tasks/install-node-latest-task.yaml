@@ -6,20 +6,19 @@ spec:
   params:
     - name: node-version
       type: string
-      default: "v23"  # Default Node.js version if not provided
+      default: "v23"  # Specify the pre-release version to install
     - name: npm-version
       type: string
-      default: ""  # Default to empty if npm version not provided
+      default: ""  # Optional npm version
   workspaces:
     - name: output
       mountPath: /artifacts
   steps:
     - name: execute
-      image: node:20  # Use a more complete Node.js image
+      image: node:20  # Use a Node.js image for installation
       script: |
         #!/bin/bash
 
-        # Get the Node.js version to install
         NODE_VERSION="v23"
         echo "Node.js version to install: $NODE_VERSION"
 
@@ -29,25 +28,22 @@ spec:
           curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          echo "NVM installed."
-        else
-          echo "NVM is already installed."
         fi
 
-        # Attempt to install the specified Node.js version using the RC mirror
-        echo "Attempting to install Node.js version $NODE_VERSION using RC mirror..."
+        # Install the specified Node.js version using the RC mirror
+        echo "Attempting to install Node.js version $NODE_VERSION..."
         NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/rc nvm install "$NODE_VERSION" || {
           echo "RC installation failed. Attempting to install Node.js version $NODE_VERSION using Nightly mirror..."
           NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/nightly nvm install "$NODE_VERSION"
         }
 
-        # Set the installed version as default
-        echo "Setting Node.js version $NODE_VERSION as default..."
-        nvm alias default "$NODE_VERSION"
+        # Create symlinks for Node.js and npm in the output workspace
+        mkdir -p /artifacts/bin
+        ln -s "$HOME/.nvm/versions/node/$NODE_VERSION/bin/node" /artifacts/bin/node
+        ln -s "$HOME/.nvm/versions/node/$NODE_VERSION/bin/npm" /artifacts/bin/npm
 
-        # Save the Node.js version to a file in the artifacts
-        echo "$NODE_VERSION" > /artifacts/node-version
-
-        # Display the installed Node.js version
+        # Display the installed versions
         echo "Node.js version installed:"
-        echo "$(node -v)"
+        /artifacts/bin/node -v
+        echo "NPM version installed:"
+        /artifacts/bin/npm -v

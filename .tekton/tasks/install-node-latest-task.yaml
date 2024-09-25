@@ -42,3 +42,4 @@ spec:
 
         # Use the installed version
         nvm use "$NODE_VERSION"
+        echo "Node: $(node --version)"

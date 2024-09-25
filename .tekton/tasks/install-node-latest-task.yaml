@@ -5,9 +5,11 @@ metadata:
 spec:
   params:
     - name: node-version
-      value: $(params.node-version)
+      type: string
+      default: "v23"  # Default Node.js version if not provided
     - name: npm-version
-      value: $(params.npm-version)
+      type: string
+      default: ""  # Default to empty if npm version not provided
   workspaces:
     - name: output
       mountPath: /artifacts
@@ -18,7 +20,7 @@ spec:
         #!/bin/bash
 
         # Get the Node.js version to install
-        NODE_VERSION="v23"
+        NODE_VERSION="$(params.node-version)"
         echo "Node.js version to install: $NODE_VERSION"
 
         # Install NVM if not already installed
@@ -36,44 +38,16 @@ spec:
         echo "Attempting to install Node.js version $NODE_VERSION using RC mirror..."
         NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/rc nvm install "$NODE_VERSION" || {
           echo "RC installation failed. Attempting to install Node.js version $NODE_VERSION using Nightly mirror..."
-          NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/nightly nvm install v23
+          NVM_NODEJS_ORG_MIRROR=https://nodejs.org/download/nightly nvm install "$NODE_VERSION"
         }
 
         # Set the installed version as default
         echo "Setting Node.js version $NODE_VERSION as default..."
-        # nvm use "$NODE_VERSION"
-        # nvm alias default "$NODE_VERSION"
+        nvm alias default "$NODE_VERSION"
 
-        # Echo the installed Node.js version
+        # Save the Node.js version to a file in the artifacts
+        echo "$NODE_VERSION" > /artifacts/node-version
+
+        # Display the installed Node.js version
         echo "Node.js version installed:"
-        node -v  # Display the Node.js version
-
-        echo "Node: $(node --version)"
-
-        if [ -n "$(params.npm-version)" ]; then
-          npm install npm@$(params.npm-version) -g
-        fi
-
-        echo "NPM: $(npm --version)"
-
-    # - name: send-slack-notification
-    #   image: curlimages/curl  # Using a curl image to send the notification
-    #   script: |
-    #     #!/bin/sh
-
-    #     SLACK_TOKEN="$(inputs.params.slack-token)"
-    #     NODE_VERSION="$(inputs.params.node-version)"
-    #     SLACK_CHANNEL="C07L6QGAHML"
-    #     SLACK_API_URL="https://slack.com/api/chat.postMessage"
-
-    #     if [ -z "$SLACK_TOKEN" ]; then
-    #       echo "No Slack token provided, skipping notification."
-    #       exit 0
-    #     fi
-
-    #     MESSAGE="Node.js version $NODE_VERSION was installed."
-
-    #     curl -X POST -H "Authorization: Bearer $SLACK_TOKEN" \
-    #       -H 'Content-type: application/json' \
-    #       --data "{\"channel\":\"$SLACK_CHANNEL\",\"text\":\"$MESSAGE\"}" \
-    #       $SLACK_API_URL
+        echo "$(node -v)"

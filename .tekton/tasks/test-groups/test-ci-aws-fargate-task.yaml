@@ -66,6 +66,21 @@ spec:
       image: node:$(params.node-version)
       script: |
         #!/bin/bash
+        # Load the Node.js version from the artifacts
+        NODE_VERSION=$(cat /artifacts/node-version)
+        echo "Using Node.js version: $NODE_VERSION"
+
+        # Set the environment variable to use the specific Node.js version
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        
+        # Use NVM to set the correct Node.js version
+        nvm use "$NODE_VERSION"
+
+        # Check versions
+        echo "Node version: $(node -v)"
+        echo "NPM version: $(npm -v)"
+
         ARTIFACTS_PATH="$(workspaces.output.path)"
         cd $ARTIFACTS_PATH
         BASE_REVISION=$(git rev-parse origin/main)

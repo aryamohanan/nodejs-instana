@@ -19,7 +19,7 @@ const awsProducts = [
   require('./sns'),
   require('./lambda')
 ];
-let ignoreCommands;
+
 const sqsConsumer = require('./sqs-consumer');
 
 /** @type {Object.<string, import('./instana_aws_product').InstanaAWSProduct} */
@@ -31,12 +31,11 @@ awsProducts.forEach(awsProduct => {
 
 let isActive = false;
 
-exports.init = function init(config) {
+exports.init = function init() {
   sqsConsumer.init();
 
   // NOTE: each aws product can have it's own init fn to wrap or unwrap specific functions
   awsProducts.forEach(awsProduct => awsProduct.init && awsProduct.init(hook, shimmer));
-  ignoreCommands = config?.tracing?.ignoreEndpoints;
 
   /**
    * @aws-sdk/smithly-client >= 3.36.0 changed how the dist structure gets delivered
@@ -55,10 +54,7 @@ exports.init = function init(config) {
   hook.onModuleLoad('@smithy/smithy-client', instrumentGlobalSmithy);
 };
 
-exports.isActive = function (extraConfig) {
-  if (extraConfig?.tracing?.ignoreEndpoints?.redis) {
-    ignoreCommands = extraConfig.tracing.ignoreEndpoints.redis;
-  }
+exports.isActive = function () {
   return isActive;
 };
 
@@ -80,21 +76,9 @@ function shimSmithySend(originalSend) {
     const self = this;
     const smithySendArgs = getFunctionArguments(arguments);
     const command = smithySendArgs[0];
-    const commandName = command.constructor.name;
-
-    const serviceId = self.config && self.config.serviceId?.toLowerCase();
-    const ignoreCommandsForService = ignoreCommands && ignoreCommands[serviceId];
-    function getCommandClassName(keyword) {
-      return `${keyword.charAt(0).toUpperCase()}${keyword.slice(1)}Command`;
-    }
-    if (ignoreCommandsForService) {
-      const ignoredCommandClasses = ignoreCommandsForService.map(getCommandClassName);
-      if (ignoredCommandClasses.includes(commandName)) {
-        return originalSend.apply(self, smithySendArgs);
-      }
-    }
-    let awsProduct = serviceId && awsProducts.find(aws => aws.getServiceIdName() === serviceId);
-    if (awsProduct && awsProduct.supportsOperation(commandName)) {
+    const serviceId = self.config && self.config.serviceId;
+    let awsProduct = serviceId && awsProducts.find(aws => aws.getServiceIdName() === serviceId.toLowerCase());
+    if (awsProduct && awsProduct.supportsOperation(command.constructor.name)) {
       return awsProduct.instrumentedSmithySend(self, isActive, originalSend, smithySendArgs);
     } else {
       // This logic should not be used in AWS SDK v4. All AWS SDK v4 instrumentations must use the new approach

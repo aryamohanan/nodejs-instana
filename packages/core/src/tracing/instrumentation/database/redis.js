@@ -13,11 +13,14 @@ const constants = require('../../constants');
 const cls = require('../../cls');
 
 let isActive = false;
-
+let ignoreCommands;
 exports.spanName = 'redis';
 exports.batchable = true;
 
-exports.activate = function activate() {
+exports.activate = function activate(extraConfig) {
+  if (extraConfig?.tracing?.ignoreEndpoints?.redis) {
+    ignoreCommands = extraConfig.tracing.ignoreEndpoints.redis;
+  }
   isActive = true;
 };
 
@@ -25,12 +28,13 @@ exports.deactivate = function deactivate() {
   isActive = false;
 };
 
-exports.init = function init() {
+exports.init = function init(config) {
   // v4 commands, "redis-commands" is outdated and no longer compatible with it
   hook.onFileLoad(/\/@redis\/client\/dist\/lib\/cluster\/commands.js/, captureCommands);
 
   hook.onModuleLoad('redis', instrument);
   hook.onModuleLoad('@redis/client', instrument);
+  ignoreCommands = config?.tracing?.ignoreEndpoints?.redis;
 };
 
 let redisCommandList = [];
@@ -218,6 +222,9 @@ function shimAllCommands(redisClass, addressUrl, cbStyle, redisCommands) {
     ) {
       return;
     }
+    if (ignoreCommands?.includes(name?.toLowerCase())) {
+      return;
+    }
 
     shimmer.wrap(redisClass, name, wrapCommand(name));
 
@@ -230,6 +237,9 @@ function instrumentCommand(original, command, address, cbStyle) {
   return function instrumentedCommandInstana() {
     const origCtx = this;
     const origArgs = arguments;
+    if (ignoreCommands?.includes(command?.toLowerCase())) {
+      return original.apply(origCtx, origArgs);
+    }
 
     if (cls.skipExitTracing({ isActive })) {
       return original.apply(origCtx, origArgs);

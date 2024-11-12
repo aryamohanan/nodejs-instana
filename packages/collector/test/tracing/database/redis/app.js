@@ -12,8 +12,18 @@ process.on('SIGTERM', () => {
 });
 
 require('./mockVersion');
-require('../../../..')();
-
+const ignoreEndpointsEnabled = process.env.IGNORE_ENDPOINTS === 'true';
+if (!ignoreEndpointsEnabled) {
+  require('../../../..')();
+} else {
+  require('../../../..')({
+    tracing: {
+      ignoreEndpoints: {
+        redis: ['set', 'get']
+      }
+    }
+  });
+}
 const redis = require(process.env.REDIS_PKG);
 const bodyParser = require('body-parser');
 const express = require('express');
@@ -106,7 +116,7 @@ app.get('/values', async (req, res) => {
   try {
     const redisRes = await connection.get(key);
     log('Got redis key successfully.');
-    await fetch(`http://127.0.0.1:${agentPort}`);
+    // await fetch(`http://127.0.0.1:${agentPort}`);
     log('Sent agent request successfully.');
     res.send(redisRes);
   } catch (err) {

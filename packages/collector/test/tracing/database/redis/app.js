@@ -19,7 +19,7 @@ if (!ignoreEndpointsEnabled) {
   require('../../../..')({
     tracing: {
       ignoreEndpoints: {
-        redis: ['set', 'get']
+        redis: process.env.IGNORE_COMMANDS ? JSON.parse(process.env.IGNORE_COMMANDS) : []
       }
     }
   });

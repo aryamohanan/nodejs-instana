@@ -208,7 +208,8 @@ const globalAgent = require('../../../globalAgent');
                   REDIS_VERSION: redisVersion,
                   REDIS_PKG: redisPkg,
                   REDIS_CLUSTER: setupType === 'cluster',
-                  IGNORE_ENDPOINTS: true
+                  IGNORE_ENDPOINTS: true,
+                  IGNORE_COMMANDS: JSON.stringify(['get', 'set'])
                 }
               });
 
@@ -249,7 +250,6 @@ const globalAgent = require('../../../globalAgent');
                       span => expect(span.n).to.equal('node.http.server'),
                       span => expect(span.data.http.method).to.equal('GET')
                     ]);
-                  //  expect(spans.length).to.eql(4);
                   });
                 })
                 .finally(async () => {

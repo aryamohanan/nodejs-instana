@@ -222,9 +222,6 @@ function shimAllCommands(redisClass, addressUrl, cbStyle, redisCommands) {
     ) {
       return;
     }
-    if (ignoreCommands?.includes(name?.toLowerCase())) {
-      return;
-    }
 
     shimmer.wrap(redisClass, name, wrapCommand(name));
 

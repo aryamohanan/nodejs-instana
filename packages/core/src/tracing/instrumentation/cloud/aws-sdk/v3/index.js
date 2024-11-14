@@ -76,7 +76,6 @@ function shimSmithySend(originalSend) {
     const self = this;
     const smithySendArgs = getFunctionArguments(arguments);
     const command = smithySendArgs[0];
-
     const serviceId = self.config && self.config.serviceId;
     let awsProduct = serviceId && awsProducts.find(aws => aws.getServiceIdName() === serviceId.toLowerCase());
     if (awsProduct && awsProduct.supportsOperation(command.constructor.name)) {

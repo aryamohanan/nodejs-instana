@@ -736,48 +736,68 @@ function normalizeIgnoreEndpoints(config) {
 function parseIgnoreEndpointsEnvVar() {
   try {
     if (!process.env.INSTANA_IGNORE_ENDPOINTS) return;
+
     return process.env.INSTANA_IGNORE_ENDPOINTS.split(';').reduce(
       (/** @type {{[key: string]: any}} */ config, serviceEntry) => {
         const [serviceName, ...filterOptions] = serviceEntry.split(':').map(p => p.trim());
+
         if (!serviceName || !filterOptions.length) return config;
 
-        config[serviceName] = config[serviceName] || [];
+        const normalizedServiceName = serviceName.toLowerCase();
+        config[normalizedServiceName] = config[normalizedServiceName] || [];
 
-        // If only one simple filtering option is provided, add it directly to the service's configuration.
+        /**
+         * Case 1: Single simple filtering option (e.g., "redis:get")
+         * - If only one filter option is provided and it does not contain ',' or ':',
+         *   treat it as a direct operation/method name and store it under the service.
+         */
         if (filterOptions.length === 1 && !filterOptions[0].includes(',') && !filterOptions[0].includes(':')) {
-          if (!Boolean(filterOptions[0])) return;
-          config[serviceName].push(filterOptions[0]);
+          const filterValue = filterOptions[0].toLowerCase();
+          if (!filterValue) return config;
+          config[normalizedServiceName].push(filterValue);
           return config;
         }
+
+        /**
+         * Case 2: Multiple filtering options with key-value pairs (e.g., "kafka:method:consume,produce,endpoints:topic1,topic2")
+         * - Filtering options can include both operation/method names and key-value pairs.
+         */
         /** @type {{[key: string]: any}} */
         const endpointFilters = {};
-
         let currentKey = '';
 
         filterOptions
           .join(':')
           .split(',')
           .forEach(option => {
+            /**
+             * Each option may be:
+             * 1. A key-value pair (e.g., "method:consume")
+             * 2. A standalone operation name (e.g., "publish")
+             */
             const [key, value] = option.includes(':') ? option.split(':').map(p => p.trim()) : [null, option.trim()];
-            if (key) {
-              endpointFilters[key] = endpointFilters[key] || [];
-              endpointFilters[key].push(value);
-              currentKey = key;
+            const normalizedKey = key ? key.toLowerCase() : null;
+            const normalizedValue = value.toLowerCase();
+
+            if (normalizedKey) {
+              endpointFilters[normalizedKey] = endpointFilters[normalizedKey] || [];
+              endpointFilters[normalizedKey].push(normalizedValue);
+              currentKey = normalizedKey;
             } else if (currentKey) {
-              endpointFilters[currentKey].push(value);
+              endpointFilters[currentKey].push(normalizedValue);
             } else {
-              config[serviceName].push(value);
+              config[normalizedServiceName].push(normalizedValue);
             }
           });
 
-        if (Object.keys(endpointFilters).length) config[serviceName].push(endpointFilters);
+        if (Object.keys(endpointFilters).length) config[normalizedServiceName].push(endpointFilters);
         return config;
       },
       {}
     );
   } catch (error) {
     logger.warn(
-      `Failed to parse INSTANA_IGNORE_ENDPOINTS: ${process.env.INSTANA_IGNORE_ENDPOINTS}. Error: ${error?.message}`
+      `Failed to parse INSTANA_IGNORE_ENDPOINTS: ${process.env.INSTANA_IGNORE_ENDPOINTS}. Error: ${error.message}`
     );
     return {};
   }

@@ -304,6 +304,7 @@ describe('unannounced state', () => {
         }
       });
     });
+
     it('should correctly set ignoreEndpoints when both string and object-based filtering applied', done => {
       prepareAnnounceResponse({
         tracing: {
@@ -349,6 +350,41 @@ describe('unannounced state', () => {
         }
       });
     });
+
+    it('should correctly parse when the config contains spaces and capital casing', done => {
+      prepareAnnounceResponse({
+        tracing: {
+          'ignore-endpoints': {
+            'KAFKA  ': [
+              {
+                'Method  ': ['*'],
+                Endpoints: ['TOPIC1  ', 'topic2   ']
+              },
+              {
+                METHOD: ['  PUBLISH'],
+                '    endpoints': ['Topic3  ']
+              }
+            ]
+          }
+        }
+      });
+      unannouncedState.enter({
+        transitionTo: () => {
+          expect(agentOptsStub.config).to.deep.equal({
+            tracing: {
+              ignoreEndpoints: {
+                kafka: [
+                  { method: ['*'], endpoints: ['topic1', 'topic2'] },
+                  { method: ['publish'], endpoints: ['topic3'] }
+                ]
+              }
+            }
+          });
+          done();
+        }
+      });
+    });
+
     it('should correctly handle only object-based ignoreEndpoints', done => {
       prepareAnnounceResponse({
         tracing: {
@@ -382,6 +418,7 @@ describe('unannounced state', () => {
         }
       });
     });
+
     it('should correctly handle ignoreEndpoints when only endpoints are provided without method', done => {
       prepareAnnounceResponse({
         tracing: {
@@ -407,6 +444,33 @@ describe('unannounced state', () => {
         }
       });
     });
+
+    it('should correctly handle ignoreEndpoints when only methods are provided without endpoints', done => {
+      prepareAnnounceResponse({
+        tracing: {
+          'ignore-endpoints': {
+            kafka: [
+              {
+                method: ['publish']
+              }
+            ]
+          }
+        }
+      });
+      unannouncedState.enter({
+        transitionTo: () => {
+          expect(agentOptsStub.config).to.deep.equal({
+            tracing: {
+              ignoreEndpoints: {
+                kafka: [{ method: ['publish'] }]
+              }
+            }
+          });
+          done();
+        }
+      });
+    });
+
     it('should handle ignoreEndpoints with empty arrays gracefully', done => {
       prepareAnnounceResponse({
         tracing: {
@@ -429,11 +493,12 @@ describe('unannounced state', () => {
         }
       });
     });
+
     it('should ignore invalid data types in ignoreEndpoints', done => {
       prepareAnnounceResponse({
         tracing: {
           'ignore-endpoints': {
-            kafka: [123, true, null, undefined, { endpoints: 'notAnArray', method: '*' }]
+            kafka: [123, true, null, undefined, {}]
           }
         }
       });
@@ -449,6 +514,7 @@ describe('unannounced state', () => {
         }
       });
     });
+
     it('should handle deeply nested invalid structures', done => {
       prepareAnnounceResponse({
         tracing: {

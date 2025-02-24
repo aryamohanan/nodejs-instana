@@ -505,6 +505,7 @@ describe('util.normalizeConfig', () => {
     });
     expect(config.tracing.ignoreEndpoints).to.deep.equal({ redis: ['get'] });
   });
+
   it('should apply multiple ignore endpoints via config', () => {
     const config = normalizeConfig({
       tracing: {
@@ -513,6 +514,7 @@ describe('util.normalizeConfig', () => {
     });
     expect(config.tracing.ignoreEndpoints).to.deep.equal({ redis: ['get', 'type'] });
   });
+
   it('should apply ignore endpoints via config for multiple packages', () => {
     const config = normalizeConfig({
       tracing: {
@@ -521,7 +523,8 @@ describe('util.normalizeConfig', () => {
     });
     expect(config.tracing.ignoreEndpoints).to.deep.equal({ redis: ['get'], dynamodb: ['querey'] });
   });
-  it('should correctly parse method and endpoint-based filtering', () => {
+
+  it('should correctly parse when object-based filtering applied', () => {
     process.env.INSTANA_IGNORE_ENDPOINTS =
       'kafka:method:*,endpoints:topic1,topic2;kafka:method:publish,endpoints:topic3';
     const config = normalizeConfig();
@@ -532,7 +535,8 @@ describe('util.normalizeConfig', () => {
       ]
     });
   });
-  it('should correctly parse when advanced filtering applied', () => {
+
+  it('should correctly parse when both string and object-based filtering applied', () => {
     process.env.INSTANA_IGNORE_ENDPOINTS =
       // eslint-disable-next-line max-len
       'redis:type,get;kafka:consume,publish;kafka:method:*,endpoints:topic1,topic2;kafka:method:publish,consume,endpoints:topic3;';
@@ -547,11 +551,20 @@ describe('util.normalizeConfig', () => {
       ]
     });
   });
-  it('should correctly parse a single operation without endpoints', () => {
+
+  it('should correctly parse a single method without endpoints', () => {
     process.env.INSTANA_IGNORE_ENDPOINTS = 'kafka:method:consume';
     const config = normalizeConfig();
     expect(config.tracing.ignoreEndpoints).to.deep.equal({
       kafka: [{ method: ['consume'] }]
+    });
+  });
+
+  it('should correctly parse a endpoint wthout method', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = 'kafka:endpoints:topic1';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({
+      kafka: [{ endpoints: ['topic1'] }]
     });
   });
 
@@ -562,7 +575,7 @@ describe('util.normalizeConfig', () => {
     expect(config.tracing.ignoreEndpoints).to.deep.equal({
       kafka: [{ method: ['publish'], endpoints: ['topic1'] }],
       redis: [{ method: ['get', 'post'] }],
-      http: [{ method: ['DELETE'], endpoints: ['/api/delete'] }]
+      http: [{ method: ['delete'], endpoints: ['/api/delete'] }]
     });
   });
 
@@ -573,9 +586,9 @@ describe('util.normalizeConfig', () => {
   });
 
   it('should handle malformed input gracefully', () => {
-    process.env.INSTANA_IGNORE_ENDPOINTS = 'invalidFormat:';
+    process.env.INSTANA_IGNORE_ENDPOINTS = 'kafka:';
     const config = normalizeConfig();
-    expect(config.tracing.ignoreEndpoints).to.deep.equal({});
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({ kafka: [] });
   });
 
   it('should handle undefined INSTANA_IGNORE_ENDPOINTS gracefully', () => {
@@ -592,13 +605,14 @@ describe('util.normalizeConfig', () => {
     });
   });
 
-  it('should correctly handle a trailing semicolon in the configuration string', () => {
-    process.env.INSTANA_IGNORE_ENDPOINTS = 'kafka:method:consume, endpoints:topic1;';
+  it('should convert to lower case around methods and endpoints', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = 'KAFKA:METHOD:consume,Publish,ENdpoints: Topic1 , topic2 ';
     const config = normalizeConfig();
     expect(config.tracing.ignoreEndpoints).to.deep.equal({
-      kafka: [{ method: ['consume'], endpoints: ['topic1'] }]
+      kafka: [{ method: ['consume', 'publish'], endpoints: ['topic1', 'topic2'] }]
     });
   });
+
   it('should ignore entries with a missing service name', () => {
     process.env.INSTANA_IGNORE_ENDPOINTS = ':method:publish, endpoints:topic1';
     const config = normalizeConfig();

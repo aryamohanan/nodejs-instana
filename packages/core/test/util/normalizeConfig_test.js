@@ -524,7 +524,26 @@ describe('util.normalizeConfig', () => {
     expect(config.tracing.ignoreEndpoints).to.deep.equal({ redis: ['get'], dynamodb: ['querey'] });
   });
 
-  it('should correctly parse when object-based filtering applied', () => {
+  it('should correctly parse when object-based filtering applied via tracer config', () => {
+    const config = normalizeConfig({
+      tracing: {
+        ignoreEndpoints: {
+          kafka: [
+            { method: ['*'], endpoints: ['topic1', 'topic2'] },
+            { method: ['publish'], endpoints: ['topic3'] }
+          ]
+        }
+      }
+    });
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({
+      kafka: [
+        { method: ['*'], endpoints: ['topic1', 'topic2'] },
+        { method: ['publish'], endpoints: ['topic3'] }
+      ]
+    });
+  });
+
+  it("should correctly parse when object-based filtering applied via 'INSTANA_IGNORE_ENDPOINTS'", () => {
     process.env.INSTANA_IGNORE_ENDPOINTS =
       'kafka:method:*,endpoints:topic1,topic2;kafka:method:publish,endpoints:topic3';
     const config = normalizeConfig();
@@ -536,7 +555,32 @@ describe('util.normalizeConfig', () => {
     });
   });
 
-  it('should correctly parse when both string and object-based filtering applied', () => {
+  it('should correctly parse when both string and object-based filtering applied via tracer config ', () => {
+    const config = normalizeConfig({
+      tracing: {
+        ignoreEndpoints: {
+          redis: ['type', 'get'],
+          kafka: [
+            'consume',
+            'publish',
+            { method: ['*'], endpoints: ['topic1', 'topic2'] },
+            { method: ['publish', 'consume'], endpoints: ['topic3'] }
+          ]
+        }
+      }
+    });
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({
+      redis: ['type', 'get'],
+      kafka: [
+        'consume',
+        'publish',
+        { method: ['*'], endpoints: ['topic1', 'topic2'] },
+        { method: ['publish', 'consume'], endpoints: ['topic3'] }
+      ]
+    });
+  });
+
+  it('should correctly parse when both string and object-based filtering applied via INSTANA_IGNORE_ENDPOINTS', () => {
     process.env.INSTANA_IGNORE_ENDPOINTS =
       // eslint-disable-next-line max-len
       'redis:type,get;kafka:consume,publish;kafka:method:*,endpoints:topic1,topic2;kafka:method:publish,consume,endpoints:topic3;';

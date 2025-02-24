@@ -725,32 +725,60 @@ function normalizeIgnoreEndpoints(config) {
       }
     });
   } else if (process.env.INSTANA_IGNORE_ENDPOINTS) {
-    try {
-      const ignoreEndpoints = Object.fromEntries(
-        process.env.INSTANA_IGNORE_ENDPOINTS.split(';')
-          .map(serviceEntry => {
-            const [serviceName, endpointList] = (serviceEntry || '').split(':').map(part => part.trim());
-
-            if (!serviceName || !endpointList) {
-              logger.warn(
-                `Invalid entry in INSTANA_IGNORE_ENDPOINTS ${process.env.INSTANA_IGNORE_ENDPOINTS}: "${serviceEntry}". Expected format is e.g. "service:endpoint1,endpoint2".`
-              );
-              return null;
-            }
-
-            return [serviceName.toLowerCase(), endpointList.split(',').map(endpoint => endpoint.trim().toLowerCase())];
-          })
-          .filter(Boolean)
-      );
-      config.tracing.ignoreEndpoints = ignoreEndpoints;
-    } catch (error) {
-      logger.warn(
-        `Failed to parse INSTANA_IGNORE_ENDPOINTS: ${process.env.INSTANA_IGNORE_ENDPOINTS}. Error: ${error?.message}`
-      );
-    }
+    config.tracing.ignoreEndpoints = parseIgnoreEndpointsEnvVar() || {};
   } else {
     return;
   }
 
   logger.debug(`Ignore endpoints have been configured: ${JSON.stringify(config.tracing.ignoreEndpoints)}`);
+}
+
+function parseIgnoreEndpointsEnvVar() {
+  try {
+    if (!process.env.INSTANA_IGNORE_ENDPOINTS) return;
+    return process.env.INSTANA_IGNORE_ENDPOINTS.split(';').reduce(
+      (/** @type {{[key: string]: any}} */ config, serviceEntry) => {
+        const [serviceName, ...filterOptions] = serviceEntry.split(':').map(p => p.trim());
+        if (!serviceName || !filterOptions.length) return config;
+
+        config[serviceName] = config[serviceName] || [];
+
+        // If only one simple filtering option is provided, add it directly to the service's configuration.
+        if (filterOptions.length === 1 && !filterOptions[0].includes(',') && !filterOptions[0].includes(':')) {
+          if (!Boolean(filterOptions[0])) return;
+          config[serviceName].push(filterOptions[0]);
+          return config;
+        }
+        /** @type {{[key: string]: any}} */
+        const endpointFilters = {};
+
+        let currentKey = '';
+
+        filterOptions
+          .join(':')
+          .split(',')
+          .forEach(option => {
+            const [key, value] = option.includes(':') ? option.split(':').map(p => p.trim()) : [null, option.trim()];
+            if (key) {
+              endpointFilters[key] = endpointFilters[key] || [];
+              endpointFilters[key].push(value);
+              currentKey = key;
+            } else if (currentKey) {
+              endpointFilters[currentKey].push(value);
+            } else {
+              config[serviceName].push(value);
+            }
+          });
+
+        if (Object.keys(endpointFilters).length) config[serviceName].push(endpointFilters);
+        return config;
+      },
+      {}
+    );
+  } catch (error) {
+    logger.warn(
+      `Failed to parse INSTANA_IGNORE_ENDPOINTS: ${process.env.INSTANA_IGNORE_ENDPOINTS}. Error: ${error?.message}`
+    );
+    return {};
+  }
 }

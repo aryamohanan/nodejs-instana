@@ -521,6 +521,107 @@ describe('util.normalizeConfig', () => {
     });
     expect(config.tracing.ignoreEndpoints).to.deep.equal({ redis: ['get'], dynamodb: ['querey'] });
   });
+  it('should correctly parse method and endpoint-based filtering', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS =
+      'kafka:method:*,endpoints:topic1,topic2;kafka:method:publish,endpoints:topic3';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({
+      kafka: [
+        { method: ['*'], endpoints: ['topic1', 'topic2'] },
+        { method: ['publish'], endpoints: ['topic3'] }
+      ]
+    });
+  });
+  it('should correctly parse when advanced filtering applied', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS =
+      // eslint-disable-next-line max-len
+      'redis:type,get;kafka:consume,publish;kafka:method:*,endpoints:topic1,topic2;kafka:method:publish,consume,endpoints:topic3;';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({
+      redis: ['type', 'get'],
+      kafka: [
+        'consume',
+        'publish',
+        { method: ['*'], endpoints: ['topic1', 'topic2'] },
+        { method: ['publish', 'consume'], endpoints: ['topic3'] }
+      ]
+    });
+  });
+  it('should correctly parse a single operation without endpoints', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = 'kafka:method:consume';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({
+      kafka: [{ method: ['consume'] }]
+    });
+  });
+
+  it('should correctly parse multiple services with mixed filters', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS =
+      'kafka:method:publish, endpoints:topic1;redis:method:get,post;http:method:DELETE,endpoints:/api/delete';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({
+      kafka: [{ method: ['publish'], endpoints: ['topic1'] }],
+      redis: [{ method: ['get', 'post'] }],
+      http: [{ method: ['DELETE'], endpoints: ['/api/delete'] }]
+    });
+  });
+
+  it('should return an empty ignoreEndpoints object if INSTANA_IGNORE_ENDPOINTS is an empty string', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = '';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({});
+  });
+
+  it('should handle malformed input gracefully', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = 'invalidFormat:';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({});
+  });
+
+  it('should handle undefined INSTANA_IGNORE_ENDPOINTS gracefully', () => {
+    delete process.env.INSTANA_IGNORE_ENDPOINTS;
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({});
+  });
+
+  it('should trim whitespace around methods and endpoints', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = ' kafka:method: consume , endpoints: topic1 , topic2 ';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({
+      kafka: [{ method: ['consume'], endpoints: ['topic1', 'topic2'] }]
+    });
+  });
+
+  it('should correctly handle a trailing semicolon in the configuration string', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = 'kafka:method:consume, endpoints:topic1;';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({
+      kafka: [{ method: ['consume'], endpoints: ['topic1'] }]
+    });
+  });
+  it('should ignore entries with a missing service name', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = ':method:publish, endpoints:topic1';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({});
+  });
+
+  it('should parse correctly with an empty method value', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = 'kafka:method:, endpoints:topic1';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({ kafka: [{ method: [''], endpoints: ['topic1'] }] });
+  });
+
+  it('should parse correctly with an empty endpoints value provided', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = 'kafka:method:publish, endpoints:';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({ kafka: [{ method: ['publish'], endpoints: [''] }] });
+  });
+
+  it('should ignore completely empty operations in the configuration string', () => {
+    process.env.INSTANA_IGNORE_ENDPOINTS = ';;;';
+    const config = normalizeConfig();
+    expect(config.tracing.ignoreEndpoints).to.deep.equal({});
+  });
 
   function checkDefaults(config) {
     expect(config).to.be.an('object');

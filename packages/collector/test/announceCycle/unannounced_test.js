@@ -304,6 +304,176 @@ describe('unannounced state', () => {
         }
       });
     });
+    it('should correctly set ignoreEndpoints when both string and object-based filtering applied', done => {
+      prepareAnnounceResponse({
+        tracing: {
+          'ignore-endpoints': {
+            kafka: [
+              'consume',
+              'publish',
+              {
+                endpoints: ['topic1', 'topic2'],
+                method: ['*']
+              },
+              {
+                endpoints: ['topic3'],
+                method: ['publish']
+              }
+            ],
+            redis: ['type', 'get']
+          }
+        }
+      });
+      unannouncedState.enter({
+        transitionTo: () => {
+          expect(agentOptsStub.config).to.deep.equal({
+            tracing: {
+              ignoreEndpoints: {
+                kafka: [
+                  'consume',
+                  'publish',
+                  {
+                    endpoints: ['topic1', 'topic2'],
+                    method: ['*']
+                  },
+                  {
+                    endpoints: ['topic3'],
+                    method: ['publish']
+                  }
+                ],
+                redis: ['type', 'get']
+              }
+            }
+          });
+          done();
+        }
+      });
+    });
+    it('should correctly handle only object-based ignoreEndpoints', done => {
+      prepareAnnounceResponse({
+        tracing: {
+          'ignore-endpoints': {
+            kafka: [
+              {
+                method: ['*'],
+                endpoints: ['topic1', 'topic2']
+              },
+              {
+                method: ['publish'],
+                endpoints: ['topic3']
+              }
+            ]
+          }
+        }
+      });
+      unannouncedState.enter({
+        transitionTo: () => {
+          expect(agentOptsStub.config).to.deep.equal({
+            tracing: {
+              ignoreEndpoints: {
+                kafka: [
+                  { method: ['*'], endpoints: ['topic1', 'topic2'] },
+                  { method: ['publish'], endpoints: ['topic3'] }
+                ]
+              }
+            }
+          });
+          done();
+        }
+      });
+    });
+    it('should correctly handle ignoreEndpoints when only endpoints are provided without method', done => {
+      prepareAnnounceResponse({
+        tracing: {
+          'ignore-endpoints': {
+            kafka: [
+              {
+                endpoints: ['topic1', 'topic2']
+              }
+            ]
+          }
+        }
+      });
+      unannouncedState.enter({
+        transitionTo: () => {
+          expect(agentOptsStub.config).to.deep.equal({
+            tracing: {
+              ignoreEndpoints: {
+                kafka: [{ endpoints: ['topic1', 'topic2'] }]
+              }
+            }
+          });
+          done();
+        }
+      });
+    });
+    it('should handle ignoreEndpoints with empty arrays gracefully', done => {
+      prepareAnnounceResponse({
+        tracing: {
+          'ignore-endpoints': {
+            kafka: []
+          }
+        }
+      });
+
+      unannouncedState.enter({
+        transitionTo: () => {
+          expect(agentOptsStub.config).to.deep.equal({
+            tracing: {
+              ignoreEndpoints: {
+                kafka: []
+              }
+            }
+          });
+          done();
+        }
+      });
+    });
+    it('should ignore invalid data types in ignoreEndpoints', done => {
+      prepareAnnounceResponse({
+        tracing: {
+          'ignore-endpoints': {
+            kafka: [123, true, null, undefined, { endpoints: 'notAnArray', method: '*' }]
+          }
+        }
+      });
+
+      unannouncedState.enter({
+        transitionTo: () => {
+          expect(agentOptsStub.config).to.deep.equal({
+            tracing: {
+              ignoreEndpoints: {}
+            }
+          });
+          done();
+        }
+      });
+    });
+    it('should handle deeply nested invalid structures', done => {
+      prepareAnnounceResponse({
+        tracing: {
+          'ignore-endpoints': {
+            kafka: [
+              {
+                endpoints: [{ topic: 'nestedTopic' }],
+                method: ['*']
+              }
+            ]
+          }
+        }
+      });
+
+      unannouncedState.enter({
+        transitionTo: () => {
+          expect(agentOptsStub.config).to.deep.equal({
+            tracing: {
+              ignoreEndpoints: {}
+            }
+          });
+          done();
+        }
+      });
+    });
 
     function prepareAnnounceResponse(announceResponse) {
       agentConnectionStub.announceNodeCollector.callsArgWithAsync(0, null, JSON.stringify(announceResponse));

@@ -9,6 +9,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const recursiveCopy = require('recursive-copy');
 const rimraf = require('util').promisify(require('rimraf'));
+const semver = require('semver');
 
 const supportedVersion = require('@instana/core').tracing.supportedVersion;
 const config = require('../../../../../core/test/config');
@@ -30,6 +31,10 @@ describe('tracing/prisma', function () {
     providers.forEach(provider => {
       const mochaSuiteFn = supportedVersion(process.versions.node) ? describe : describe.skip;
 
+      // V7 only support version v20.19 and above
+      if (version === 'latest' && semver.lt(process.versions.node, '20.19.0')) {
+        return;
+      }
       // NOTE: require-mock is not working with esm apps. There is also no need to run the ESM APP for all versions.
       // TODO: Support for mocking `import` in ESM apps is planned under INSTA-788.
       if (process.env.RUN_ESM && version !== 'latest') return;

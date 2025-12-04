@@ -18,6 +18,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const port = require('../../../test_util/app-port')();
 const path = require('node:path');
+const fs = require('fs');
 
 const app = express();
 const logPrefix = `Prisma App (${process.pid}):\t`;
@@ -48,8 +49,15 @@ try {
       log(`Initialized Prisma ${version} with PostgreSQL adapter`);
     } else {
       const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
-      const dbPath = path.resolve(__dirname, 'prisma', 'dev.db');
-      adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
+      let dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
+
+      // If the DB file does not exist here, fallback to the directory of the app
+      if (!fs.existsSync(dbPath)) {
+        dbPath = path.join(__dirname, 'prisma', 'dev.db');
+      }
+      adapter = new PrismaBetterSqlite3({
+        url: `file:${dbPath}`
+      });
       log(`Initialized Prisma ${version} with SQLite adapter`);
     }
 

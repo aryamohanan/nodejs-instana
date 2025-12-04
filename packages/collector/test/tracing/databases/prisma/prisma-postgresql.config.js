@@ -4,10 +4,11 @@
 
 'use strict';
 
-const { defineConfig, env } = require('prisma/config');
-
+const { defineConfig } = require('prisma/config');
+// eslint-disable-next-line no-console
+console.log('--55----', process.env.PRISMA_POSTGRES_URL);
 module.exports = defineConfig({
   datasource: {
-    url: env('PRISMA_POSTGRES_URL')
+    url: process.env.PRISMA_POSTGRES_URL
   }
 });

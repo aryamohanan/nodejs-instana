@@ -40,6 +40,7 @@ try {
   const version = process.env.PRISMA_VERSION || 'latest';
   const provider = process.env.PROVIDER;
   const databaseUrl = process.env.PRISMA_POSTGRES_URL || 'file:./dev.db';
+  console.log('------databaseUrl-------', databaseUrl);
 
   const useAdapter = version === 'latest';
   let adapter = null;

@@ -104,7 +104,7 @@ describe('tracing/prisma', function () {
           await executeAsync(`npx prisma generate ${prismaConfig}`, appDir);
 
           // Run database migrations to create the table
-          await executeAsync(`npx prisma migrate dev ${prismaConfig}`, appDir);
+          await executeAsync(`npx prisma migrate reset --force ${prismaConfig}`, appDir);
         });
 
         after(async () => {

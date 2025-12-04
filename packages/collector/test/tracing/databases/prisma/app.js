@@ -32,7 +32,7 @@ if (process.env.WITH_STDOUT) {
 
 app.use(bodyParser.json());
 
-// Prisma initialization with optional adapters (v7+)
+// From V7, databases require a driver adapter when creating a new Prisma Client.
 let prisma;
 
 try {

@@ -50,7 +50,7 @@ try {
     } else {
       const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3');
       const __dirname = path.dirname(fileURLToPath(import.meta.url));
-      const dbPath = path.resolve(__dirname, 'prisma', 'dev.db');
+      const dbPath = path.resolve(__dirname, 'dev.db');
       adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
       console.log(`Initialized Prisma ${version} with SQLite adapter`);
     }

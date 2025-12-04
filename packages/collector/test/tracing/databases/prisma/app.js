@@ -20,7 +20,6 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const port = require('../../../test_util/app-port')();
 const path = require('node:path');
-const fs = require('fs');
 
 const app = express();
 const logPrefix = `Prisma App (${process.pid}):\t`;
@@ -39,8 +38,6 @@ let prisma;
 try {
   const version = process.env.PRISMA_VERSION || 'latest';
   const provider = process.env.PROVIDER;
-  const databaseUrl = process.env.PRISMA_POSTGRES_URL || 'file:./dev.db';
-  console.log('------databaseUrl-------', databaseUrl);
 
   const useAdapter = version === 'latest';
   let adapter = null;
@@ -48,20 +45,11 @@ try {
   if (useAdapter) {
     if (provider === 'postgresql') {
       const { PrismaPg } = require('@prisma/adapter-pg');
-      adapter = new PrismaPg({ connectionString: databaseUrl });
+      adapter = new PrismaPg({ connectionString: process.env.PRISMA_POSTGRES_URL });
       log(`Initialized Prisma ${version} with PostgreSQL adapter`);
     } else {
       const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
-      // Path at the same level as the app folder
       const dbPath = path.join(__dirname, 'dev.db');
-
-      if (fs.existsSync(dbPath)) {
-        console.log('dev.db found at:', dbPath);
-      } else {
-        console.log('dev.db not found. Checked:', dbPath);
-        // Optional: list files in parent folder
-        console.log('Parent directory contents:', fs.readdirSync(path.join(__dirname, '..')));
-      }
       adapter = new PrismaBetterSqlite3({
         url: `file:${dbPath}`
       });

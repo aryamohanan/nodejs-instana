@@ -37,7 +37,6 @@ let prisma;
 try {
   const version = process.env.PRISMA_VERSION || 'latest';
   const provider = process.env.PROVIDER;
-  const databaseUrl = process.env.PRISMA_POSTGRES_URL || 'file:./dev.db';
 
   const useAdapter = version === 'latest';
   let adapter = null;
@@ -45,7 +44,7 @@ try {
   if (useAdapter) {
     if (provider === 'postgresql') {
       const { PrismaPg } = await import('@prisma/adapter-pg');
-      adapter = new PrismaPg({ connectionString: databaseUrl });
+      adapter = new PrismaPg({ connectionString: process.env.PRISMA_POSTGRES_URL });
       console.log(`Initialized Prisma ${version} with PostgreSQL adapter`);
     } else {
       const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3');

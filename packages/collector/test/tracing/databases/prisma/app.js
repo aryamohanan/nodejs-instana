@@ -4,6 +4,8 @@
 
 'use strict';
 
+/* eslint-disable no-console */
+
 // NOTE: c8 bug https://github.com/bcoe/c8/issues/166
 process.on('SIGTERM', () => {
   process.disconnect();
@@ -49,6 +51,34 @@ try {
       log(`Initialized Prisma ${version} with PostgreSQL adapter`);
     } else {
       const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
+      console.log('CWD:', process.cwd());
+      console.log('__dirname:', __dirname);
+
+      // List everything under CWD
+      console.log('CWD contents:', fs.readdirSync(process.cwd()));
+
+      // Try listing prisma folders
+      try {
+        const prismaPathFromCwd = path.join(process.cwd(), 'prisma');
+        console.log('prisma (from CWD):', fs.readdirSync(prismaPathFromCwd));
+      } catch (e) {
+        console.log('prisma folder not found under CWD');
+      }
+
+      try {
+        const prismaPathFromDir = path.join(__dirname, 'prisma');
+        console.log('prisma (from __dirname):', fs.readdirSync(prismaPathFromDir));
+      } catch (e) {
+        console.log('prisma folder not found under __dirname');
+      }
+      const dbPath1 = path.resolve('./prisma/dev.db');
+
+      if (fs.existsSync(dbPath1)) {
+        console.log('prisma/dev.db found at:', dbPath1);
+      } else {
+        console.log('prisma/dev.db not found. Checked:', dbPath1);
+      }
+
       let dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
 
       // If the DB file does not exist here, fallback to the directory of the app

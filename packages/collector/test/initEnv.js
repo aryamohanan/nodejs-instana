@@ -42,7 +42,7 @@ const DEFAULT_ENV_VALUES = {
   MSSQL_PORT: '1433',
   MSSQL_USER: 'sa',
   MSSQL_PW: 'stanCanHazMsSQL1',
-  DATABASE_URL: 'file:./dev.db'
+  PRISMA_DATABASE_URL: 'file:./dev.db'
 };
 
 // CASE: if env variable is not set from outside, fallback to defaults

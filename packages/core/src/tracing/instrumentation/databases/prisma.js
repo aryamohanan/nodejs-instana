@@ -80,7 +80,9 @@ function instrumentClientConstructor(prismaClientModule) {
           const provider = this._engineConfig.activeProvider;
           let dataSourceUrl = '';
 
-          // adapter is available from v7
+          // From v7 prisma client requires adapters.
+          // For postgres adapters, the url can be found in either `connectionString` or  `externalPool`
+          // TODO: Extend support for other types of adapters
           if (this._engineConfig.adapter) {
             const adapter = this._engineConfig.adapter;
             try {
